@@ -1,0 +1,3918 @@
+---
+title: "**기업별 반도체 특허 시각화 및 분석**"
+subtitle: "**S**tatistics **N**etwork **A**nalysis"
+author: "조사방법론2 2조 <br> 가천대학교 응용통계학과 <br> 김민형, 박민지, 이건영, 이승민"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    code_folding: show
+    fig_caption: yes
+    fig_height: 7
+    fig_width: 10
+    highlight: haddock
+    number_sections: yes
+    pandoc_args:
+    - --number-sections
+    - --number-offset=0
+    self_contained: no
+    theme: cosmo
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+<style type="text/css">
+  body, td {
+     font-size: 16px;
+     font-family: 맑은 고딕
+  }
+  code.r{
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 맑은 고딕
+  }
+  pre {
+    font-size: 14px
+    font-family: 맑은 고딕
+  }
+  h1,h2,h3,h4,h5,h6{
+    font-family: 맑은 고딕;
+  }
+  h1{
+    font-size: 22pt;
+  }
+  h2{
+    font-size: 20pt;
+  }
+  h3{
+    font-size: 18pt;
+  }
+</style>
+
+<style>
+#TOC {
+top:5%;
+}
+.list-group-item.active, .list-group-item.active:focus,.list-group-item.active:hover {
+background-color: skyblue;
+color: black;
+border-color: gray;
+}
+</style>
+
+<br>
+
+> 반도체 특허 심사 진행 상태 및 부품별 비율
+
+---
+
+<br>
+
+```{r, include = FALSE}
+library(multilinguer)
+library(stringr) 
+library(wordcloud2) 
+library(KoNLP)
+library(wordcloud)
+library(RColorBrewer)
+library(tidyverse)
+library(ggfortify)
+library(ggpubr)
+library(ggthemes)
+library(olsrr)
+library(ggplot2) 
+library(dplyr) 
+library(tm)
+library(magrittr)
+library(patchwork)
+library(GGally)
+library(gridExtra)
+library(ggbreak)
+```
+
+# <5> 부품별 상위 키워드 1개에 대한 <br>  3사의 5개년 심사진행상태 추이 {-}
+
+<br>
+
+## 1. 코드 {-}
+
+> 예시
+
+<br>
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+
+rate<- function(x, y, z){
+  b<-x %>% filter(grepl(y, 출원일자))
+  a<-intersect(x %>% filter(grepl(y, 출원일자)), x %>% filter(grepl(z, 심사진행상태)))
+  
+  return(nrow(a)/nrow(b))
+}
+
+
+
+# display(crystal) 키워드 최근 5년(2022 ~ 2018) 심사진행상태 추이
+# 등록결정=1, 거절결정=2, 포기=3, 취하=4
+crys_lg<-read.csv("crys_lg.csv", header = T)
+crys_sam<-read.csv("crys_sam.csv", header = T)
+crys_sk<-read.csv("crys_sk.csv", header = T)
+
+# 등록결정
+crys_l_2022_1<-rate(crys_lg, 2022, '등록결정')
+crys_l_2021_1<-rate(crys_lg, 2021, '등록결정')
+crys_l_2020_1<-rate(crys_lg, 2020, '등록결정')
+crys_l_2019_1<-rate(crys_lg, 2019, '등록결정')
+crys_l_2018_1<-rate(crys_lg, 2018, '등록결정')
+
+#거절결정
+crys_l_2022_2<-rate(crys_lg, 2022, '거절결정')
+crys_l_2021_2<-rate(crys_lg, 2021, '거절결정')
+crys_l_2020_2<-rate(crys_lg, 2020, '거절결정')
+crys_l_2019_2<-rate(crys_lg, 2019, '거절결정')
+crys_l_2018_2<-rate(crys_lg, 2018, '거절결정')
+
+# 포기
+crys_l_2022_3<-rate(crys_lg, 2022, '포기')
+crys_l_2021_3<-rate(crys_lg, 2021, '포기')
+crys_l_2020_3<-rate(crys_lg, 2020, '포기')
+crys_l_2019_3<-rate(crys_lg, 2019, '포기')
+crys_l_2018_3<-rate(crys_lg, 2018, '포기')
+
+# 취하
+crys_l_2022_4<-rate(crys_lg, 2022, '취하')
+crys_l_2021_4<-rate(crys_lg, 2021, '취하')
+crys_l_2020_4<-rate(crys_lg, 2020, '취하')
+crys_l_2019_4<-rate(crys_lg, 2019, '취하')
+crys_l_2018_4<-rate(crys_lg, 2018, '취하')
+
+```
+
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+
+crys_l<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'),
+                   '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018),
+                   '비율'= c(crys_l_2022_1,crys_l_2021_1,crys_l_2020_1,crys_l_2019_1,crys_l_2018_1,crys_l_2022_2,crys_l_2021_2,crys_l_2020_2,crys_l_2019_2,crys_l_2018_2,crys_l_2022_3,crys_l_2021_3,crys_l_2020_3,crys_l_2019_3,crys_l_2018_3,crys_l_2022_4,crys_l_2021_4,crys_l_2020_4,crys_l_2019_4,crys_l_2018_4))
+
+```
+
+<br>
+
+> 그래프 코드
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+win.graph(15,10)
+g1 <- ggplot(data=crys_l, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+ geom_point(size=2.5, color='#FFFFFF') + labs(title='LG crystal 관련 특허 최근 5년 심사진행상태')
+```
+
+
+<br>
+
+---
+
+<br>
+
+## 2. 3사 crystal 관련 특허  {-}
+
+<br>
+
+> display 관련 공통 최상위 키워드 **'crystal'** 에 대한 <br> 3사의 5개년(2022 ~ 2018) 심사진행상태 추이
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+
+rate<- function(x, y, z){
+  b<-x %>% filter(grepl(y, 출원일자))
+  a<-intersect(x %>% filter(grepl(y, 출원일자)), x %>% filter(grepl(z, 심사진행상태)))
+  
+  return(nrow(a)/nrow(b))
+}
+
+
+
+# display(crystal) 키워드 최근 5년(2022 ~ 2018) 심사진행상태 추이
+# 등록결정=1, 거절결정=2, 포기=3, 취하=4
+crys_lg<-read.csv("crys_lg.csv", header = T)
+crys_sam<-read.csv("crys_sam.csv", header = T)
+crys_sk<-read.csv("crys_sk.csv", header = T)
+
+# 등록결정
+crys_l_2022_1<-rate(crys_lg, 2022, '등록결정')
+crys_l_2021_1<-rate(crys_lg, 2021, '등록결정')
+crys_l_2020_1<-rate(crys_lg, 2020, '등록결정')
+crys_l_2019_1<-rate(crys_lg, 2019, '등록결정')
+crys_l_2018_1<-rate(crys_lg, 2018, '등록결정')
+
+crys_s_2022_1<-rate(crys_sam, 2022, '등록결정')
+crys_s_2021_1<-rate(crys_sam, 2021, '등록결정')
+crys_s_2020_1<-rate(crys_sam, 2020, '등록결정')
+crys_s_2019_1<-rate(crys_sam, 2019, '등록결정')
+crys_s_2018_1<-rate(crys_sam, 2018, '등록결정')
+
+crys_k_2022_1<-rate(crys_sk, 2022, '등록결정')
+crys_k_2021_1<-rate(crys_sk, 2021, '등록결정')
+crys_k_2020_1<-rate(crys_sk, 2020, '등록결정')
+crys_k_2019_1<-rate(crys_sk, 2019, '등록결정')
+crys_k_2018_1<-rate(crys_sk, 2018, '등록결정')
+
+#거절결정
+crys_l_2022_2<-rate(crys_lg, 2022, '거절결정')
+crys_l_2021_2<-rate(crys_lg, 2021, '거절결정')
+crys_l_2020_2<-rate(crys_lg, 2020, '거절결정')
+crys_l_2019_2<-rate(crys_lg, 2019, '거절결정')
+crys_l_2018_2<-rate(crys_lg, 2018, '거절결정')
+
+crys_s_2022_2<-rate(crys_sam, 2022, '거절결정')
+crys_s_2021_2<-rate(crys_sam, 2021, '거절결정')
+crys_s_2020_2<-rate(crys_sam, 2020, '거절결정')
+crys_s_2019_2<-rate(crys_sam, 2019, '거절결정')
+crys_s_2018_2<-rate(crys_sam, 2018, '거절결정')
+
+crys_k_2022_2<-rate(crys_sk, 2022, '거절결정')
+crys_k_2021_2<-rate(crys_sk, 2021, '거절결정')
+crys_k_2020_2<-rate(crys_sk, 2020, '거절결정')
+crys_k_2019_2<-rate(crys_sk, 2019, '거절결정')
+crys_k_2018_2<-rate(crys_sk, 2018, '거절결정')
+
+
+
+# 포기
+crys_l_2022_3<-rate(crys_lg, 2022, '포기')
+crys_l_2021_3<-rate(crys_lg, 2021, '포기')
+crys_l_2020_3<-rate(crys_lg, 2020, '포기')
+crys_l_2019_3<-rate(crys_lg, 2019, '포기')
+crys_l_2018_3<-rate(crys_lg, 2018, '포기')
+
+crys_s_2022_3<-rate(crys_sam, 2022, '포기')
+crys_s_2021_3<-rate(crys_sam, 2021, '포기')
+crys_s_2020_3<-rate(crys_sam, 2020, '포기')
+crys_s_2019_3<-rate(crys_sam, 2019, '포기')
+crys_s_2018_3<-rate(crys_sam, 2018, '포기')
+
+crys_k_2022_3<-rate(crys_sk, 2022, '포기')
+crys_k_2021_3<-rate(crys_sk, 2021, '포기')
+crys_k_2020_3<-rate(crys_sk, 2020, '포기')
+crys_k_2019_3<-rate(crys_sk, 2019, '포기')
+crys_k_2018_3<-rate(crys_sk, 2018, '포기')
+
+
+
+# 취하
+crys_l_2022_4<-rate(crys_lg, 2022, '취하')
+crys_l_2021_4<-rate(crys_lg, 2021, '취하')
+crys_l_2020_4<-rate(crys_lg, 2020, '취하')
+crys_l_2019_4<-rate(crys_lg, 2019, '취하')
+crys_l_2018_4<-rate(crys_lg, 2018, '취하')
+
+crys_s_2022_4<-rate(crys_sam, 2022, '취하')
+crys_s_2021_4<-rate(crys_sam, 2021, '취하')
+crys_s_2020_4<-rate(crys_sam, 2020, '취하')
+crys_s_2019_4<-rate(crys_sam, 2019, '취하')
+crys_s_2018_4<-rate(crys_sam, 2018, '취하')
+
+crys_k_2022_4<-rate(crys_sk, 2022, '취하')
+crys_k_2021_4<-rate(crys_sk, 2021, '취하')
+crys_k_2020_4<-rate(crys_sk, 2020, '취하')
+crys_k_2019_4<-rate(crys_sk, 2019, '취하')
+crys_k_2018_4<-rate(crys_sk, 2018, '취하')
+
+
+crys_l<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(crys_l_2022_1,crys_l_2021_1,crys_l_2020_1,crys_l_2019_1,crys_l_2018_1,crys_l_2022_2,crys_l_2021_2,crys_l_2020_2,crys_l_2019_2,crys_l_2018_2,crys_l_2022_3,crys_l_2021_3,crys_l_2020_3,crys_l_2019_3,crys_l_2018_3,crys_l_2022_4,crys_l_2021_4,crys_l_2020_4,crys_l_2019_4,crys_l_2018_4))
+
+crys_s<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(crys_s_2022_1,crys_s_2021_1,crys_s_2020_1,crys_s_2019_1,crys_s_2018_1,crys_s_2022_2,crys_s_2021_2,crys_s_2020_2,crys_s_2019_2,crys_s_2018_2,crys_s_2022_3,crys_s_2021_3,crys_s_2020_3,crys_s_2019_3,crys_s_2018_3,crys_s_2022_4,crys_s_2021_4,crys_s_2020_4,crys_s_2019_4,crys_s_2018_4))
+
+crys_k<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(crys_k_2022_1,crys_k_2021_1,crys_k_2020_1,crys_k_2019_1,crys_k_2018_1,crys_k_2022_2,crys_k_2021_2,crys_k_2020_2,crys_k_2019_2,crys_k_2018_2,crys_k_2022_3,crys_k_2021_3,crys_k_2020_3,crys_k_2019_3,crys_k_2018_3,crys_k_2022_4,crys_k_2021_4,crys_k_2020_4,crys_k_2019_4,crys_k_2018_4))
+
+
+
+
+
+win.graph(15,10)
+g1 <- ggplot(data=crys_l, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+ geom_point(size=2.5, color='#FFFFFF') + labs(title='LG crystal 관련 특허 최근 5년 심사진행상태')
+
+
+g2 <- ggplot(data=crys_s, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SAMSUNG crystal 관련 특허 최근 5년 심사진행상태')
+
+
+g3 <- ggplot(data=crys_k, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SK crystal 관련 특허 최근 5년 심사진행상태')
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+grid.arrange(g1, g2, g3, nrow=1, ncol=3)
+
+```
+
+<br>
+
+---
+
+<br>
+
+## 3. 3사 oled 관련 특허  {-}
+
+<br>
+
+> led 관련 공통 최상위 키워드 **'oled'** 에 대한 <br> 3사의 5개년(2022 ~ 2018) 심사진행상태 추이
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+# led(oled) 키워드 최근 5년(2022 ~ 2018) 심사진행상태 추이
+# 등록결정=1, 거절결정=2, 포기=3, 취하=4
+
+oled_lg<-read.csv("oled_lg.csv", header = T)
+oled_sam<-read.csv("oled_sam.csv", header = T)
+oled_sk<-read.csv("oled_sk.csv", header = T)
+View(oled_sam)
+View(oled_sk)
+
+# 등록결정
+oled_l_2022_1<-rate(oled_lg, 2022, '등록결정')
+oled_l_2021_1<-rate(oled_lg, 2021, '등록결정')
+oled_l_2020_1<-rate(oled_lg, 2020, '등록결정')
+oled_l_2019_1<-rate(oled_lg, 2019, '등록결정')
+oled_l_2018_1<-rate(oled_lg, 2018, '등록결정')
+
+oled_s_2022_1<-rate(oled_sam, 2022, '등록결정')
+oled_s_2021_1<-rate(oled_sam, 2021, '등록결정')
+oled_s_2020_1<-rate(oled_sam, 2020, '등록결정')
+oled_s_2019_1<-rate(oled_sam, 2019, '등록결정')
+oled_s_2018_1<-rate(oled_sam, 2018, '등록결정')
+
+oled_k_2022_1<-rate(oled_sk, 2022, '등록결정')
+oled_k_2021_1<-rate(oled_sk, 2021, '등록결정')
+oled_k_2020_1<-rate(oled_sk, 2020, '등록결정')
+oled_k_2019_1<-rate(oled_sk, 2019, '등록결정')
+oled_k_2018_1<-rate(oled_sk, 2018, '등록결정')
+
+#거절결정
+oled_l_2022_2<-rate(oled_lg, 2022, '거절결정')
+oled_l_2021_2<-rate(oled_lg, 2021, '거절결정')
+oled_l_2020_2<-rate(oled_lg, 2020, '거절결정')
+oled_l_2019_2<-rate(oled_lg, 2019, '거절결정')
+oled_l_2018_2<-rate(oled_lg, 2018, '거절결정')
+
+oled_s_2022_2<-rate(oled_sam, 2022, '거절결정')
+oled_s_2021_2<-rate(oled_sam, 2021, '거절결정')
+oled_s_2020_2<-rate(oled_sam, 2020, '거절결정')
+oled_s_2019_2<-rate(oled_sam, 2019, '거절결정')
+oled_s_2018_2<-rate(oled_sam, 2018, '거절결정')
+
+oled_k_2022_2<-rate(oled_sk, 2022, '거절결정')
+oled_k_2021_2<-rate(oled_sk, 2021, '거절결정')
+oled_k_2020_2<-rate(oled_sk, 2020, '거절결정')
+oled_k_2019_2<-rate(oled_sk, 2019, '거절결정')
+oled_k_2018_2<-rate(oled_sk, 2018, '거절결정')
+
+
+
+# 포기
+oled_l_2022_3<-rate(oled_lg, 2022, '포기')
+oled_l_2021_3<-rate(oled_lg, 2021, '포기')
+oled_l_2020_3<-rate(oled_lg, 2020, '포기')
+oled_l_2019_3<-rate(oled_lg, 2019, '포기')
+oled_l_2018_3<-rate(oled_lg, 2018, '포기')
+
+oled_s_2022_3<-rate(oled_sam, 2022, '포기')
+oled_s_2021_3<-rate(oled_sam, 2021, '포기')
+oled_s_2020_3<-rate(oled_sam, 2020, '포기')
+oled_s_2019_3<-rate(oled_sam, 2019, '포기')
+oled_s_2018_3<-rate(crys_sam, 2018, '포기')
+
+oled_k_2022_3<-rate(oled_sk, 2022, '포기')
+oled_k_2021_3<-rate(oled_sk, 2021, '포기')
+oled_k_2020_3<-rate(oled_sk, 2020, '포기')
+oled_k_2019_3<-rate(oled_sk, 2019, '포기')
+oled_k_2018_3<-rate(oled_sk, 2018, '포기')
+
+
+
+# 취하
+oled_l_2022_4<-rate(oled_lg, 2022, '취하')
+oled_l_2021_4<-rate(oled_lg, 2021, '취하')
+oled_l_2020_4<-rate(oled_lg, 2020, '취하')
+oled_l_2019_4<-rate(oled_lg, 2019, '취하')
+oled_l_2018_4<-rate(oled_lg, 2018, '취하')
+
+oled_s_2022_4<-rate(oled_sam, 2022, '취하')
+oled_s_2021_4<-rate(oled_sam, 2021, '취하')
+oled_s_2020_4<-rate(oled_sam, 2020, '취하')
+oled_s_2019_4<-rate(oled_sam, 2019, '취하')
+oled_s_2018_4<-rate(oled_sam, 2018, '취하')
+
+oled_k_2022_4<-rate(oled_sk, 2022, '취하')
+oled_k_2021_4<-rate(oled_sk, 2021, '취하')
+oled_k_2020_4<-rate(oled_sk, 2020, '취하')
+oled_k_2019_4<-rate(oled_sk, 2019, '취하')
+oled_k_2018_4<-rate(oled_sk, 2018, '취하')
+
+
+oled_l<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(oled_l_2022_1,oled_l_2021_1,oled_l_2020_1,oled_l_2019_1,oled_l_2018_1,oled_l_2022_2,oled_l_2021_2,oled_l_2020_2,oled_l_2019_2,oled_l_2018_2,oled_l_2022_3,oled_l_2021_3,oled_l_2020_3,oled_l_2019_3,oled_l_2018_3,oled_l_2022_4,oled_l_2021_4,oled_l_2020_4,oled_l_2019_4,oled_l_2018_4))
+
+oled_s<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(oled_s_2022_1,oled_s_2021_1,oled_s_2020_1,oled_s_2019_1,oled_s_2018_1,oled_s_2022_2,oled_s_2021_2,oled_s_2020_2,oled_s_2019_2,oled_s_2018_2,oled_s_2022_3,oled_s_2021_3,oled_s_2020_3,oled_s_2019_3,oled_s_2018_3,oled_s_2022_4,oled_s_2021_4,oled_s_2020_4,oled_s_2019_4,oled_s_2018_4))
+
+oled_k<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(oled_k_2022_1,oled_k_2021_1,oled_k_2020_1,oled_k_2019_1,oled_k_2018_1,oled_k_2022_2,oled_k_2021_2,oled_k_2020_2,oled_k_2019_2,oled_k_2018_2,oled_k_2022_3,oled_k_2021_3,oled_k_2020_3,oled_k_2019_3,oled_k_2018_3,oled_k_2022_4,oled_k_2021_4,oled_k_2020_4,oled_k_2019_4,oled_k_2018_4))
+
+
+
+
+
+win.graph(15,10)
+g1 <- ggplot(data=oled_l, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='LG oled 관련 특허 최근 5년 심사진행상태')
+
+
+g2 <- ggplot(data=oled_s, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SAMSUNG oled 관련 특허 최근 5년 심사진행상태')
+
+
+g3 <- ggplot(data=oled_k, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SK oled 관련 특허 최근 5년 심사진행상태')
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+grid.arrange(g1, g2, g3, nrow=1, ncol=3)
+```
+
+<br>
+
+---
+
+<br>
+
+## 4. 3사 sram 관련 특허  {-}
+
+<br>
+
+> ram 관련 공통 최상위 키워드 **'sram'** 에 대한 <br> 3사의 5개년(2022 ~ 2018) 심사진행상태 추이
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+# ram(sram) 키워드 최근 5년(2022 ~ 2018) 심사진행상태 추이
+# 등록결정=1, 거절결정=2, 포기=3, 취하=4
+
+sram_lg<-read.csv("sram_lg.csv", header = T)
+sram_sam<-read.csv("sram_sam.csv", header = T)
+sram_sk<-read.csv("sram_sk.csv", header = T)
+
+# 등록결정
+sram_l_2022_1<-rate(sram_lg, 2022, '등록결정')
+sram_l_2021_1<-rate(sram_lg, 2021, '등록결정')
+sram_l_2020_1<-rate(sram_lg, 2020, '등록결정')
+sram_l_2019_1<-rate(sram_lg, 2019, '등록결정')
+sram_l_2018_1<-rate(sram_lg, 2018, '등록결정')
+
+sram_s_2022_1<-rate(sram_sam, 2022, '등록결정')
+sram_s_2021_1<-rate(sram_sam, 2021, '등록결정')
+sram_s_2020_1<-rate(sram_sam, 2020, '등록결정')
+sram_s_2019_1<-rate(sram_sam, 2019, '등록결정')
+sram_s_2018_1<-rate(sram_sam, 2018, '등록결정')
+
+sram_k_2022_1<-rate(sram_sk, 2022, '등록결정')
+sram_k_2021_1<-rate(sram_sk, 2021, '등록결정')
+sram_k_2020_1<-rate(sram_sk, 2020, '등록결정')
+sram_k_2019_1<-rate(sram_sk, 2019, '등록결정')
+sram_k_2018_1<-rate(sram_sk, 2018, '등록결정')
+
+#거절결정
+sram_l_2022_2<-rate(sram_lg, 2022, '거절결정')
+sram_l_2021_2<-rate(sram_lg, 2021, '거절결정')
+sram_l_2020_2<-rate(sram_lg, 2020, '거절결정')
+sram_l_2019_2<-rate(sram_lg, 2019, '거절결정')
+sram_l_2018_2<-rate(sram_lg, 2018, '거절결정')
+
+sram_s_2022_2<-rate(sram_sam, 2022, '거절결정')
+sram_s_2021_2<-rate(sram_sam, 2021, '거절결정')
+sram_s_2020_2<-rate(sram_sam, 2020, '거절결정')
+sram_s_2019_2<-rate(sram_sam, 2019, '거절결정')
+sram_s_2018_2<-rate(sram_sam, 2018, '거절결정')
+
+sram_k_2022_2<-rate(sram_sk, 2022, '거절결정')
+sram_k_2021_2<-rate(sram_sk, 2021, '거절결정')
+sram_k_2020_2<-rate(sram_sk, 2020, '거절결정')
+sram_k_2019_2<-rate(sram_sk, 2019, '거절결정')
+sram_k_2018_2<-rate(sram_sk, 2018, '거절결정')
+
+
+
+# 포기
+sram_l_2022_3<-rate(sram_lg, 2022, '포기')
+sram_l_2021_3<-rate(sram_lg, 2021, '포기')
+sram_l_2020_3<-rate(sram_lg, 2020, '포기')
+sram_l_2019_3<-rate(sram_lg, 2019, '포기')
+sram_l_2018_3<-rate(sram_lg, 2018, '포기')
+
+sram_s_2022_3<-rate(sram_sam, 2022, '포기')
+sram_s_2021_3<-rate(sram_sam, 2021, '포기')
+sram_s_2020_3<-rate(sram_sam, 2020, '포기')
+sram_s_2019_3<-rate(sram_sam, 2019, '포기')
+sram_s_2018_3<-rate(sram_sam, 2018, '포기')
+
+sram_k_2022_3<-rate(sram_sk, 2022, '포기')
+sram_k_2021_3<-rate(sram_sk, 2021, '포기')
+sram_k_2020_3<-rate(sram_sk, 2020, '포기')
+sram_k_2019_3<-rate(sram_sk, 2019, '포기')
+sram_k_2018_3<-rate(oled_sk, 2018, '포기')
+
+View(sram_lg)
+
+# 취하
+sram_l_2022_4<-rate(sram_lg, 2022, '취하')
+sram_l_2021_4<-rate(sram_lg, 2021, '취하')
+sram_l_2020_4<-rate(sram_lg, 2020, '취하')
+sram_l_2019_4<-rate(sram_lg, 2019, '취하')
+sram_l_2018_4<-rate(sram_lg, 2018, '취하')
+
+sram_s_2022_4<-rate(sram_sam, 2022, '취하')
+sram_s_2021_4<-rate(sram_sam, 2021, '취하')
+sram_s_2020_4<-rate(sram_sam, 2020, '취하')
+sram_s_2019_4<-rate(sram_sam, 2019, '취하')
+sram_s_2018_4<-rate(sram_sam, 2018, '취하')
+
+sram_k_2022_4<-rate(sram_sk, 2022, '취하')
+sram_k_2021_4<-rate(sram_sk, 2021, '취하')
+sram_k_2020_4<-rate(sram_sk, 2020, '취하')
+sram_k_2019_4<-rate(sram_sk, 2019, '취하')
+sram_k_2018_4<-rate(sram_sk, 2018, '취하')
+
+
+sram_l<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(sram_l_2022_1,sram_l_2021_1,sram_l_2020_1,sram_l_2019_1,sram_l_2018_1,sram_l_2022_2,sram_l_2021_2,sram_l_2020_2,sram_l_2019_2,sram_l_2018_2,sram_l_2022_3,sram_l_2021_3,sram_l_2020_3,sram_l_2019_3,sram_l_2018_3,sram_l_2022_4,sram_l_2021_4,sram_l_2020_4,sram_l_2019_4,sram_l_2018_4))
+
+sram_s<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(sram_s_2022_1,sram_s_2021_1,sram_s_2020_1,sram_s_2019_1,sram_s_2018_1,sram_s_2022_2,sram_s_2021_2,sram_s_2020_2,sram_s_2019_2,sram_s_2018_2,sram_s_2022_3,sram_s_2021_3,sram_s_2020_3,sram_s_2019_3,sram_s_2018_3,sram_s_2022_4,sram_s_2021_4,sram_s_2020_4,sram_s_2019_4,sram_s_2018_4))
+
+sram_k<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(sram_k_2022_1,sram_k_2021_1,sram_k_2020_1,sram_k_2019_1,sram_k_2018_1,sram_k_2022_2,sram_k_2021_2,sram_k_2020_2,sram_k_2019_2,sram_k_2018_2,sram_k_2022_3,sram_k_2021_3,sram_k_2020_3,sram_k_2019_3,sram_k_2018_3,sram_k_2022_4,sram_k_2021_4,sram_k_2020_4,sram_k_2019_4,sram_k_2018_4))
+
+
+
+
+
+win.graph(15,10)
+g1 <- ggplot(data=sram_l, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='LG sram 관련 특허 최근 5년 심사진행상태')
+
+
+g2 <- ggplot(data=sram_s, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SAMSUNG sram 관련 특허 최근 5년 심사진행상태')
+
+
+g3 <- ggplot(data=sram_k, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SK sram 관련 특허 최근 5년 심사진행상태')
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+grid.arrange(g1, g2, g3, nrow=1, ncol=3)
+
+```
+
+<br>
+
+---
+
+<br>
+
+## 5. 3사 panel 관련 특허  {-}
+
+<br>
+
+> transistor 관련 공통 최상위 키워드 **'panel'** 에 대한 <br> 3사의 5개년(2022 ~ 2018) 심사진행상태 추이
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+# transistor(panel) 키워드 최근 5년(2022 ~ 2018) 심사진행상태 추이
+# 등록결정=1, 거절결정=2, 포기=3, 취하=4
+
+pa_lg<-read.csv("panel_lg.csv", header = T)
+pa_sam<-read.csv("panel_sam.csv", header = T)
+pa_sk<-read.csv("panel_sk.csv", header = T)
+
+# 등록결정
+pa_l_2022_1<-rate(pa_lg, 2022, '등록결정')
+pa_l_2021_1<-rate(pa_lg, 2021, '등록결정')
+pa_l_2020_1<-rate(pa_lg, 2020, '등록결정')
+pa_l_2019_1<-rate(pa_lg, 2019, '등록결정')
+pa_l_2018_1<-rate(pa_lg, 2018, '등록결정')
+
+pa_s_2022_1<-rate(pa_sam, 2022, '등록결정')
+pa_s_2021_1<-rate(pa_sam, 2021, '등록결정')
+pa_s_2020_1<-rate(pa_sam, 2020, '등록결정')
+pa_s_2019_1<-rate(pa_sam, 2019, '등록결정')
+pa_s_2018_1<-rate(pa_sam, 2018, '등록결정')
+
+pa_k_2022_1<-rate(pa_sk, 2022, '등록결정')
+pa_k_2021_1<-rate(pa_sk, 2021, '등록결정')
+pa_k_2020_1<-rate(pa_sk, 2020, '등록결정')
+pa_k_2019_1<-rate(pa_sk, 2019, '등록결정')
+pa_k_2018_1<-rate(pa_sk, 2018, '등록결정')
+
+#거절결정
+pa_l_2022_2<-rate(pa_lg, 2022, '거절결정')
+pa_l_2021_2<-rate(pa_lg, 2021, '거절결정')
+pa_l_2020_2<-rate(pa_lg, 2020, '거절결정')
+pa_l_2019_2<-rate(pa_lg, 2019, '거절결정')
+pa_l_2018_2<-rate(pa_lg, 2018, '거절결정')
+
+pa_s_2022_2<-rate(pa_sam, 2022, '거절결정')
+pa_s_2021_2<-rate(pa_sam, 2021, '거절결정')
+pa_s_2020_2<-rate(pa_sam, 2020, '거절결정')
+pa_s_2019_2<-rate(pa_sam, 2019, '거절결정')
+pa_s_2018_2<-rate(pa_sam, 2018, '거절결정')
+
+pa_k_2022_2<-rate(pa_sk, 2022, '거절결정')
+pa_k_2021_2<-rate(pa_sk, 2021, '거절결정')
+pa_k_2020_2<-rate(pa_sk, 2020, '거절결정')
+pa_k_2019_2<-rate(pa_sk, 2019, '거절결정')
+pa_k_2018_2<-rate(pa_sk, 2018, '거절결정')
+
+
+
+# 포기
+pa_l_2022_3<-rate(pa_lg, 2022, '포기')
+pa_l_2021_3<-rate(pa_lg, 2021, '포기')
+pa_l_2020_3<-rate(pa_lg, 2020, '포기')
+pa_l_2019_3<-rate(pa_lg, 2019, '포기')
+pa_l_2018_3<-rate(pa_lg, 2018, '포기')
+
+pa_s_2022_3<-rate(pa_sam, 2022, '포기')
+pa_s_2021_3<-rate(pa_sam, 2021, '포기')
+pa_s_2020_3<-rate(pa_sam, 2020, '포기')
+pa_s_2019_3<-rate(pa_sam, 2019, '포기')
+pa_s_2018_3<-rate(pa_sam, 2018, '포기')
+
+pa_k_2022_3<-rate(pa_sk, 2022, '포기')
+pa_k_2021_3<-rate(pa_sk, 2021, '포기')
+pa_k_2020_3<-rate(pa_sk, 2020, '포기')
+pa_k_2019_3<-rate(pa_sk, 2019, '포기')
+pa_k_2018_3<-rate(pa_sk, 2018, '포기')
+
+
+
+# 취하
+pa_l_2022_4<-rate(pa_lg, 2022, '취하')
+pa_l_2021_4<-rate(pa_lg, 2021, '취하')
+pa_l_2020_4<-rate(pa_lg, 2020, '취하')
+pa_l_2019_4<-rate(pa_lg, 2019, '취하')
+pa_l_2018_4<-rate(pa_lg, 2018, '취하')
+
+pa_s_2022_4<-rate(pa_sam, 2022, '취하')
+pa_s_2021_4<-rate(pa_sam, 2021, '취하')
+pa_s_2020_4<-rate(pa_sam, 2020, '취하')
+pa_s_2019_4<-rate(pa_sam, 2019, '취하')
+pa_s_2018_4<-rate(pa_sam, 2018, '취하')
+
+pa_k_2022_4<-rate(pa_sk, 2022, '취하')
+pa_k_2021_4<-rate(pa_sk, 2021, '취하')
+pa_k_2020_4<-rate(pa_sk, 2020, '취하')
+pa_k_2019_4<-rate(pa_sk, 2019, '취하')
+pa_k_2018_4<-rate(pa_sk, 2018, '취하')
+
+
+pa_l<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(pa_l_2022_1,pa_l_2021_1,pa_l_2020_1,pa_l_2019_1,pa_l_2018_1,pa_l_2022_2,pa_l_2021_2,pa_l_2020_2,pa_l_2019_2,pa_l_2018_2,pa_l_2022_3,pa_l_2021_3,pa_l_2020_3,pa_l_2019_3,pa_l_2018_3,pa_l_2022_4,pa_l_2021_4,pa_l_2020_4,pa_l_2019_4,pa_l_2018_4))
+
+pa_s<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(pa_s_2022_1,pa_s_2021_1,pa_s_2020_1,pa_s_2019_1,pa_s_2018_1,pa_s_2022_2,pa_s_2021_2,pa_s_2020_2,pa_s_2019_2,pa_s_2018_2,pa_s_2022_3,pa_s_2021_3,pa_s_2020_3,pa_s_2019_3,pa_s_2018_3,pa_s_2022_4,pa_s_2021_4,pa_s_2020_4,pa_s_2019_4,pa_s_2018_4))
+
+pa_k<-data.frame('심사진행상태'=c('등록결정','등록결정','등록결정','등록결정','등록결정','거절결정', '거절결정', '거절결정', '거절결정', '거절결정','포기','포기','포기','포기','포기','취하','취하','취하','취하','취하'), '연도'=c(2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018,2022,2021,2020,2019,2018), '비율'= c(pa_k_2022_1,pa_k_2021_1,pa_k_2020_1,pa_k_2019_1,pa_k_2018_1,pa_k_2022_2,pa_k_2021_2,pa_k_2020_2,pa_k_2019_2,pa_k_2018_2,pa_k_2022_3,pa_k_2021_3,pa_k_2020_3,pa_k_2019_3,pa_k_2018_3,pa_k_2022_4,pa_k_2021_4,pa_k_2020_4,pa_k_2019_4,pa_k_2018_4))
+
+
+
+
+win.graph(15,10)
+g1 <- ggplot(data=pa_l, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='LG panel 관련 특허 최근 5년 심사진행상태')
+
+
+g2 <- ggplot(data=pa_s, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SAMSUNG panel 관련 특허 최근 5년 심사진행상태')
+
+
+g3 <- ggplot(data=pa_k, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+ geom_line(size=1.3) + geom_point(size=4) +
+  geom_point(size=2.5, color='#FFFFFF') + labs(title='SK panel 관련 특허 최근 5년 심사진행상태')
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+grid.arrange(g1, g2, g3, nrow=1, ncol=3)
+
+```
+
+
+<br>
+
+---
+
+<br>
+
+---
+
+<br>
+
+# <6> 특허 심사 진행 상태 {-}
+
+<br>
+
+
+## 1. 코드 {-}
+
+> 예시
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/display(LG).csv", header=T)
+display_lg <- display_lg[!(display_lg$심사진행상태 == ""), ]
+display_lg$심사진행상태 <- gsub("\\(.*?\\)","",display_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_lg$심사진행상태 <- substr(display_lg$심사진행상태, 1, 5)
+display_lg$심사진행상태 <- str_trim(display_lg$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_lg_1 <- nrow(display_lg[display_lg$심사진행상태 == "등록결정",])
+display_lg_1 <- nrow(display_lg[display_lg$심사진행상태 == "등록결정",])
+display_lg_2 <- nrow(display_lg[display_lg$심사진행상태 == "거절결정",])
+display_lg_3 <- nrow(display_lg[display_lg$심사진행상태 == "포기",])
+display_lg_4 <- nrow(display_lg[display_lg$심사진행상태 == "취하",])
+display_lg_5 <- nrow(display_lg[display_lg$심사진행상태 == "원결정유지",])
+display_lg <- nrow(display_lg)
+
+#lg사 display 관련 특허건 개수
+display_lg #39209 #lg사 display 관련 특허 건 수
+display_lg_1 #26915 #lg사 display 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+display_lg_2 #2996 #lg사 display 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+display_lg_3 #54 #lg사 display 관련 특허 중 포기(미납) 건 개수
+display_lg_4 #8755 #lg사 display 관련 특허 중 취하(심사미청구) 건 개수
+display_lg_5 #422 #lg사 display 관련 특허 중 원결정유지 건 개수
+
+#lg사 display 관련 특허건 비율
+display_lg_1_per <- display_lg_1 / display_lg 
+display_lg_2_per <- display_lg_2 / display_lg
+display_lg_3_per <- display_lg_3 / display_lg 
+display_lg_4_per <- display_lg_4 / display_lg 
+display_lg_5_per <- display_lg_5 / display_lg #원결정유지건은 제외
+display_lg_1_per #0.6864495
+display_lg_2_per #0.07641103
+display_lg_3_per #0.001377235
+display_lg_4_per #0.2232906
+
+#lg사 display 관련 특허건
+display_lg <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                         "비율"=c(display_lg_1_per,display_lg_2_per,display_lg_3_per,display_lg_4_per))
+```
+
+<br>
+
+> 그래프 코드
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+d_l = ggplot(display_lg, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "LG사 display 관련 특허건 비율")
+```
+
+
+
+<br>
+
+---
+
+<br>
+
+## 2. LG {-}
+
+```{r, include = FALSE}
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/display(LG).csv", header=T)
+display_lg <- display_lg[!(display_lg$심사진행상태 == ""), ]
+display_lg$심사진행상태 <- gsub("\\(.*?\\)","",display_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_lg$심사진행상태 <- substr(display_lg$심사진행상태, 1, 5)
+display_lg$심사진행상태 <- str_trim(display_lg$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_lg_1 <- nrow(display_lg[display_lg$심사진행상태 == "등록결정",])
+display_lg_1 <- nrow(display_lg[display_lg$심사진행상태 == "등록결정",])
+display_lg_2 <- nrow(display_lg[display_lg$심사진행상태 == "거절결정",])
+display_lg_3 <- nrow(display_lg[display_lg$심사진행상태 == "포기",])
+display_lg_4 <- nrow(display_lg[display_lg$심사진행상태 == "취하",])
+display_lg_5 <- nrow(display_lg[display_lg$심사진행상태 == "원결정유지",])
+display_lg <- nrow(display_lg)
+
+#lg사 display 관련 특허건 개수
+display_lg #39209 #lg사 display 관련 특허 건 수
+display_lg_1 #26915 #lg사 display 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+display_lg_2 #2996 #lg사 display 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+display_lg_3 #54 #lg사 display 관련 특허 중 포기(미납) 건 개수
+display_lg_4 #8755 #lg사 display 관련 특허 중 취하(심사미청구) 건 개수
+display_lg_5 #422 #lg사 display 관련 특허 중 원결정유지 건 개수
+
+#lg사 display 관련 특허건 비율
+display_lg_1_per <- display_lg_1 / display_lg 
+display_lg_2_per <- display_lg_2 / display_lg
+display_lg_3_per <- display_lg_3 / display_lg 
+display_lg_4_per <- display_lg_4 / display_lg 
+display_lg_5_per <- display_lg_5 / display_lg #원결정유지건은 제외
+display_lg_1_per #0.6864495
+display_lg_2_per #0.07641103
+display_lg_3_per #0.001377235
+display_lg_4_per #0.2232906
+
+#lg사 display 관련 특허건
+display_lg <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                         "비율"=c(display_lg_1_per,display_lg_2_per,display_lg_3_per,display_lg_4_per))
+```
+
+
+```{r, include = FALSE}
+## Lg Led
+#데이터 불러오기 및 전처리
+led_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/LED(LG).csv", header=T)
+led_lg <- led_lg[!(led_lg$심사진행상태 == ""), ]
+led_lg$심사진행상태 <- gsub("\\(.*?\\)","",led_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_lg$심사진행상태 <- substr(led_lg$심사진행상태, 1, 5)
+led_lg$심사진행상태 <- str_trim(led_lg$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_lg_1 <- nrow(led_lg[led_lg$심사진행상태 == "등록결정",])
+led_lg_1 <- nrow(led_lg[led_lg$심사진행상태 == "등록결정",])
+led_lg_2 <- nrow(led_lg[led_lg$심사진행상태 == "거절결정",])
+led_lg_3 <- nrow(led_lg[led_lg$심사진행상태 == "포기",])
+led_lg_4 <- nrow(led_lg[led_lg$심사진행상태 == "취하",])
+led_lg_5 <- nrow(led_lg[led_lg$심사진행상태 == "원결정유지",])
+led_lg <- nrow(led_lg)
+
+#lg사 led 관련 특허건 개수
+led_lg #1056 #lg사 led 관련 특허 건 수
+led_lg_1 #696 #lg사 led 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+led_lg_2 #160 #lg사 led 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+led_lg_3 #5 #lg사 led 관련 특허 중 포기(미납) 건 개수
+led_lg_4 #188 #lg사 led 관련 특허 중 취하(심사미청구) 건 개수
+led_lg_5 #5 #lg사 led 관련 특허 중 원결정유지 건 개수
+
+#lg사 led 관련 특허건 비율
+led_lg_1_per <- led_lg_1 / led_lg 
+led_lg_2_per <- led_lg_2 / led_lg
+led_lg_3_per <- led_lg_3 / led_lg 
+led_lg_4_per <- led_lg_4 / led_lg 
+led_lg_5_per <- led_lg_5 / led_lg #원결정유지건은 제외
+led_lg_1_per #0.6590909
+led_lg_2_per #0.1515152
+led_lg_3_per #0.004734848
+led_lg_4_per #0.1780303
+
+
+#lg사 led 관련 특허건
+led_lg <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                     "비율"=c(led_lg_1_per,led_lg_2_per,led_lg_3_per,led_lg_4_per))
+```
+
+
+```{r, include = FALSE}
+##LG ram
+#데이터 불러오기 및 전처리
+ram_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/RAM(LG).csv", header=T)
+ram_lg <- ram_lg[!(ram_lg$심사진행상태 == ""), ]
+ram_lg$심사진행상태 <- gsub("\\(.*?\\)","",ram_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+ram_lg$심사진행상태 <- substr(ram_lg$심사진행상태, 1, 5)
+ram_lg$심사진행상태 <- str_trim(ram_lg$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_lg_1 <- nrow(ram_lg[ram_lg$심사진행상태 == "등록결정",])
+ram_lg_1 <- nrow(ram_lg[ram_lg$심사진행상태 == "등록결정",])
+ram_lg_2 <- nrow(ram_lg[ram_lg$심사진행상태 == "거절결정",])
+ram_lg_3 <- nrow(ram_lg[ram_lg$심사진행상태 == "포기",])
+ram_lg_4 <- nrow(ram_lg[ram_lg$심사진행상태 == "취하",])
+ram_lg_5 <- nrow(ram_lg[ram_lg$심사진행상태 == "원결정유지",])
+ram_lg <- nrow(ram_lg)
+
+#lg사 ram 관련 특허건 개수
+ram_lg #69 #lg사 ram 관련 특허 건 수
+ram_lg_1 #36 #lg사 ram 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+ram_lg_2 #5 #lg사 ram 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+ram_lg_3 #0 #lg사 ram 관련 특허 중 포기(미납) 건 개수
+ram_lg_4 #27 #lg사 ram 관련 특허 중 취하(심사미청구) 건 개수
+ram_lg_5 #0 #lg사 ram 관련 특허 중 원결정유지 건 개수
+
+#lg사 ram 관련 특허건 비율
+ram_lg_1_per <- ram_lg_1 / ram_lg 
+ram_lg_2_per <- ram_lg_2 / ram_lg
+ram_lg_3_per <- ram_lg_3 / ram_lg 
+ram_lg_4_per <- ram_lg_4 / ram_lg 
+ram_lg_5_per <- ram_lg_5 / ram_lg #원결정유지건은 제외
+ram_lg_1_per #0.5217391
+ram_lg_2_per #0.07246377
+ram_lg_3_per #0
+ram_lg_4_per #0.3913043
+
+
+#lg사 ram 관련 특허건
+ram_lg <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                     "비율"=c(ram_lg_1_per,ram_lg_2_per,ram_lg_3_per,ram_lg_4_per))
+```
+
+
+```{r, include = FALSE}
+##LG transistor
+#데이터 불러오기 및 전처리
+transistor_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/Transistor(LG).csv", header=T)
+transistor_lg <- transistor_lg[!(transistor_lg$심사진행상태 == ""), ]
+transistor_lg$심사진행상태 <- gsub("\\(.*?\\)","",transistor_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+
+transistor_lg$심사진행상태 <- substr(transistor_lg$심사진행상태, 1, 5)
+transistor_lg$심사진행상태 <- str_trim(transistor_lg$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_lg_1 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "등록결정",])
+transistor_lg_1 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "등록결정",])
+transistor_lg_2 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "거절결정",])
+transistor_lg_3 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "포기",])
+transistor_lg_4 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "취하",])
+transistor_lg_5 <- nrow(transistor_lg[transistor_lg$심사진행상태 == "원결정유지",])
+transistor_lg <- nrow(transistor_lg)
+
+#lg사 transistor 관련 특허건 개수
+transistor_lg 
+transistor_lg_1 
+transistor_lg_2
+transistor_lg_3
+transistor_lg_4
+transistor_lg_5
+
+#lg사 transistor 관련 특허건 비율
+transistor_lg_1_per <- transistor_lg_1 / transistor_lg 
+transistor_lg_2_per <- transistor_lg_2 / transistor_lg
+transistor_lg_3_per <- transistor_lg_3 / transistor_lg
+transistor_lg_4_per <- transistor_lg_4 / transistor_lg
+transistor_lg_5_per <- transistor_lg_5 / transistor_lg #원결정유지건은 제외
+transistor_lg_1_per 
+transistor_lg_2_per 
+transistor_lg_3_per 
+transistor_lg_4_per 
+
+
+#lg사 transistor 관련 특허건
+transistor_lg <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                            "비율"=c(transistor_lg_1_per,transistor_lg_2_per,transistor_lg_3_per,transistor_lg_4_per))
+
+```
+
+
+
+```{r, include = FALSE}
+d_l = ggplot(display_lg, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "LG사 display 관련 특허건 비율")
+
+l_l = ggplot(led_lg, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+     geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+     geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+     labs(title = "LG사 led 관련 특허건 비율")
+
+r_l = ggplot(ram_lg, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "LG사 ram 관련 특허건 비율")
+
+t_l = ggplot(transistor_lg, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "LG사 transistor 관련 특허건 비율")
+```
+
+```{r, echo=F}
+grid.arrange(d_l,l_l,r_l,t_l)
+```
+
+<br>
+
+---
+
+<br>
+
+## 3. SAMSUNG {-}
+```{r, include = FALSE}
+##sam dis
+#데이터 불러오기 및 전처리
+display_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/display_samsung.csv", header=T)
+display_samsung <- display_samsung[!(display_samsung$심사진행상태 == ""), ]
+display_samsung$심사진행상태 <- gsub("\\(.*?\\)","",display_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_samsung$심사진행상태 <- substr(display_samsung$심사진행상태, 1, 5)
+display_samsung$심사진행상태 <- str_trim(display_samsung$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_samsung_1 <- nrow(display_samsung[display_samsung$심사진행상태 == "등록결정",])
+display_samsung_1 <- nrow(display_samsung[display_samsung$심사진행상태 == "등록결정",])
+display_samsung_2 <- nrow(display_samsung[display_samsung$심사진행상태 == "거절결정",])
+display_samsung_3 <- nrow(display_samsung[display_samsung$심사진행상태 == "포기",])
+display_samsung_4 <- nrow(display_samsung[display_samsung$심사진행상태 == "취하",])
+display_samsung_5 <- nrow(display_samsung[display_samsung$심사진행상태 == "원결정유지",])
+display_samsung <- nrow(display_samsung)
+
+#samsung사 display 관련 특허건 개수
+display_samsung #43934 #samsung사 display 관련 특허 건 수
+display_samsung_1 #27026 #samsung사 display 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+display_samsung_2 #4840 #samsung사 display 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+display_samsung_3 #379 #samsung사 display 관련 특허 중 포기(미납) 건 개수
+display_samsung_4 #11326 #samsung사 display 관련 특허 중 취하(심사미청구) 건 개수
+display_samsung_5 #259 #samsung사 display 관련 특허 중 원결정유지 건 개수
+
+#samsung사 display 관련 특허건 비율
+display_samsung_1_per <- display_samsung_1 / display_samsung 
+display_samsung_2_per <- display_samsung_2 / display_samsung
+display_samsung_3_per <- display_samsung_3 / display_samsung
+display_samsung_4_per <- display_samsung_4 / display_samsung
+display_samsung_5_per <- display_samsung_5 / display_samsung #원결정유지건은 제외
+display_samsung_1_per #0.61515
+display_samsung_2_per #0.1101652
+display_samsung_3_per #0.008626576
+display_samsung_4_per #0.008626576
+
+#samsung사 display 관련 특허건
+display_samsung <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                              "비율"=c(display_samsung_1_per,display_samsung_2_per,display_samsung_3_per,display_samsung_4_per))
+```
+
+
+```{r, include = FALSE}
+##sam led
+#데이터 불러오기 및 전처리
+led_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/led_samsung.csv", header=T)
+led_samsung <- led_samsung[!(led_samsung$심사진행상태 == ""), ]
+led_samsung$심사진행상태 <- gsub("\\(.*?\\)","",led_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_samsung$심사진행상태 <- substr(led_samsung$심사진행상태, 1, 5)
+led_samsung$심사진행상태 <- str_trim(led_samsung$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_samsung_1 <- nrow(led_samsung[led_samsung$심사진행상태 == "등록결정",])
+led_samsung_1 <- nrow(led_samsung[led_samsung$심사진행상태 == "등록결정",])
+led_samsung_2 <- nrow(led_samsung[led_samsung$심사진행상태 == "거절결정",])
+led_samsung_3 <- nrow(led_samsung[led_samsung$심사진행상태 == "포기",])
+led_samsung_4 <- nrow(led_samsung[led_samsung$심사진행상태 == "취하",])
+led_samsung_5 <- nrow(led_samsung[led_samsung$심사진행상태 == "원결정유지",])
+led_samsung <- nrow(led_samsung)
+
+#samsung사 led 관련 특허건 개수
+led_samsung #1453 #samsung사 led 관련 특허 건 수
+led_samsung_1 #874 #samsung사 led 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+led_samsung_2 #134 #samsung사 led 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+led_samsung_3 #22 #samsung사 led 관련 특허 중 포기(미납) 건 개수
+led_samsung_4 #416 #samsung사 led 관련 특허 중 취하(심사미청구) 건 개수
+led_samsung_5 #5 #samsung사 led 관련 특허 중 원결정유지 건 개수
+
+#samsung사 led 관련 특허건 비율
+led_samsung_1_per <- led_samsung_1 / led_samsung 
+led_samsung_2_per <- led_samsung_2 / led_samsung
+led_samsung_3_per <- led_samsung_3 / led_samsung
+led_samsung_4_per <- led_samsung_4 / led_samsung
+led_samsung_5_per <- led_samsung_5 / led_samsung #원결정유지건은 제외
+led_samsung_1_per #0.6015141
+led_samsung_2_per #0.09222299
+led_samsung_3_per #0.01514109
+led_samsung_4_per #0.2863042
+
+
+#samsung사 led 관련 특허건
+led_samsung <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                          "비율"=c(led_samsung_1_per,led_samsung_2_per,led_samsung_3_per,led_samsung_4_per))
+```
+
+
+```{r, include = FALSE}
+## sam ram
+#데이터 불러오기 및 전처리
+ram_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/ram_samsung.csv", header=T)
+ram_samsung <- ram_samsung[!(ram_samsung$심사진행상태 == ""), ]
+ram_samsung$심사진행상태 <- gsub("\\(.*?\\)","",ram_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+ram_samsung$심사진행상태 <- substr(ram_samsung$심사진행상태, 1, 5)
+ram_samsung$심사진행상태 <- str_trim(ram_samsung$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_samsung_1 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "등록결정",])
+ram_samsung_1 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "등록결정",])
+ram_samsung_2 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "거절결정",])
+ram_samsung_3 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "포기",])
+ram_samsung_4 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "취하",])
+ram_samsung_5 <- nrow(ram_samsung[ram_samsung$심사진행상태 == "원결정유지",])
+ram_samsung <- nrow(ram_samsung)
+
+#samsung사 ram 관련 특허건 개수
+ram_samsung 
+ram_samsung_1 
+ram_samsung_2
+ram_samsung_3
+ram_samsung_4
+ram_samsung_5
+
+#samsung사 ram 관련 특허건 비율
+ram_samsung_1_per <- ram_samsung_1 / ram_samsung 
+ram_samsung_2_per <- ram_samsung_2 / ram_samsung
+ram_samsung_3_per <- ram_samsung_3 / ram_samsung
+ram_samsung_4_per <- ram_samsung_4 / ram_samsung
+ram_samsung_5_per <- ram_samsung_5 / ram_samsung #원결정유지건은 제외
+ram_samsung_1_per 
+ram_samsung_2_per 
+ram_samsung_3_per 
+ram_samsung_4_per 
+
+
+#samsung사 ram 관련 특허건 비율
+ram_samsung <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                          "비율"=c(ram_samsung_1_per,ram_samsung_2_per,ram_samsung_3_per,ram_samsung_4_per))
+```
+
+
+```{r, include = FALSE}
+##sam tran
+#데이터 불러오기 및 전처리
+transistor_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/transistor_samsung.csv", header=T)
+transistor_samsung <- transistor_samsung[!(transistor_samsung$심사진행상태 == ""), ]
+transistor_samsung$심사진행상태 <- gsub("\\(.*?\\)","",transistor_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+transistor_samsung$심사진행상태 <- substr(transistor_samsung$심사진행상태, 1, 5)
+transistor_samsung$심사진행상태 <- str_trim(transistor_samsung$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_samsung_1 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "등록결정",])
+transistor_samsung_1 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "등록결정",])
+transistor_samsung_2 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "거절결정",])
+transistor_samsung_3 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "포기",])
+transistor_samsung_4 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "취하",])
+transistor_samsung_5 <- nrow(transistor_samsung[transistor_samsung$심사진행상태 == "원결정유지",])
+transistor_samsung <- nrow(transistor_samsung)
+
+#samsung사 transistor 관련 특허건 개수
+transistor_samsung 
+transistor_samsung_1 
+transistor_samsung_2
+transistor_samsung_3
+transistor_samsung_4
+transistor_samsung_5
+
+#samsung사 transistor 관련 특허건 비율
+transistor_samsung_1_per <- transistor_samsung_1 / transistor_samsung 
+transistor_samsung_2_per <- transistor_samsung_2 / transistor_samsung
+transistor_samsung_3_per <- transistor_samsung_3 / transistor_samsung
+transistor_samsung_4_per <- transistor_samsung_4 / transistor_samsung
+transistor_samsung_5_per <- transistor_samsung_5 / transistor_samsung #원결정유지건은 제외
+transistor_samsung_1_per 
+transistor_samsung_2_per 
+transistor_samsung_3_per 
+transistor_samsung_4_per 
+
+#samsung사 transistor 관련 특허건 비율 그래프
+transistor_samsung <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                                 "비율"=c(transistor_samsung_1_per,transistor_samsung_2_per,transistor_samsung_3_per,transistor_samsung_4_per))
+
+```
+
+
+```{r, include = FALSE}
+d_s = ggplot(display_samsung, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Samsung사 display 관련 특허건 비율")
+
+l_s = ggplot(led_samsung, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Samsung사 led 관련 특허건 비율")
+
+r_s = ggplot(ram_samsung, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Samsung사 ram 관련 특허건 비율")
+
+t_s = ggplot(transistor_samsung, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Samsung사 transistor 관련 특허건 비율")
+
+```
+
+```{r, echo=F}
+grid.arrange(d_s,l_s,r_s,t_s)
+```
+
+
+<br>
+
+---
+
+<br>
+
+## 4. SK {-}
+
+
+```{r, include = FALSE}
+##sk dis
+#데이터 불러오기 및 전처리
+display_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skdisplay.csv", header=T, fileEncoding="euc-kr")
+display_sk <- display_sk[!(display_sk$심사진행상태 == ""), ]
+display_sk$심사진행상태 <- gsub("\\(.*?\\)","",display_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_sk$심사진행상태 <- substr(display_sk$심사진행상태, 1, 5)
+display_sk$심사진행상태 <- str_trim(display_sk$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_sk_1 <- nrow(display_sk[display_sk$심사진행상태 == "등록결정",])
+display_sk_1 <- nrow(display_sk[display_sk$심사진행상태 == "등록결정",])
+display_sk_2 <- nrow(display_sk[display_sk$심사진행상태 == "거절결정",])
+display_sk_3 <- nrow(display_sk[display_sk$심사진행상태 == "포기",])
+display_sk_4 <- nrow(display_sk[display_sk$심사진행상태 == "취하",])
+display_sk_5 <- nrow(display_sk[display_sk$심사진행상태 == "원결정유지",])
+display_sk <- nrow(display_sk)
+
+#sk사 display 관련 특허건 개수
+display_sk #314 #sk사 display 관련 특허 건 수
+display_sk_1 #221 #sk사 display 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+display_sk_2 #42 #sk사 display 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+display_sk_3 #6 #sk사 display 관련 특허 중 포기(미납) 건 개수
+display_sk_4 #43 #sk사 display 관련 특허 중 취하(심사미청구) 건 개수
+display_sk_5 #0 #sk사 display 관련 특허 중 원결정유지 건 개수
+
+#sk사 display 관련 특허건 비율
+display_sk_1_per <- display_sk_1 / display_sk 
+display_sk_2_per <- display_sk_2 / display_sk
+display_sk_3_per <- display_sk_3 / display_sk 
+display_sk_4_per <- display_sk_4 / display_sk 
+display_sk_5_per <- display_sk_5 / display_sk #원결정유지건은 제외
+display_sk_1_per #0.7038217
+display_sk_2_per #0.133758
+display_sk_3_per #0.01910828
+display_sk_4_per #0.1369427
+
+
+#sk사 display 관련 특허건 비율
+display_sk <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                         "비율"=c(display_sk_1_per,display_sk_2_per,display_sk_3_per,display_sk_4_per))
+```
+
+
+```{r, include = FALSE}
+##sk led
+#데이터 불러오기 및 전처리
+led_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skled.csv", header=T, fileEncoding="euc-kr")
+led_sk <- led_sk[!(led_sk$심사진행상태 == ""), ]
+led_sk$심사진행상태 <- gsub("\\(.*?\\)","",led_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_sk$심사진행상태 <- substr(led_sk$심사진행상태, 1, 5)
+led_sk$심사진행상태 <- str_trim(led_sk$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_sk_1 <- nrow(led_sk[led_sk$심사진행상태 == "등록결정",])
+led_sk_1 <- nrow(led_sk[led_sk$심사진행상태 == "등록결정",])
+led_sk_2 <- nrow(led_sk[led_sk$심사진행상태 == "거절결정",])
+led_sk_3 <- nrow(led_sk[led_sk$심사진행상태 == "포기",])
+led_sk_4 <- nrow(led_sk[led_sk$심사진행상태 == "취하",])
+led_sk_5 <- nrow(led_sk[led_sk$심사진행상태 == "원결정유지",])
+led_sk <- nrow(led_sk)
+
+#sk사 led 관련 특허건 개수
+led_sk #153 #sk사 led 관련 특허 건 수
+led_sk_1 #98 #sk사 led 관련 특허 중 등록결정 건 개수 (재심사 후 등록결정건 포함)
+led_sk_2 #11 #sk사 led 관련 특허 중 거절결정 건 개수(거절결정 후 재심사중인 건 포함)
+led_sk_3 #2 #sk사 led 관련 특허 중 포기(미납) 건 개수
+led_sk_4 #41 #sk사 led 관련 특허 중 취하(심사미청구) 건 개수
+led_sk_5 #1 #sk사 led 관련 특허 중 원결정유지 건 개수
+
+#SK사 led 관련 특허건 비율
+led_sk_1_per <- led_sk_1 / led_sk 
+led_sk_2_per <- led_sk_2 / led_sk
+led_sk_3_per <- led_sk_3 / led_sk 
+led_sk_4_per <- led_sk_4 / led_sk 
+led_sk_5_per <- led_sk_5 / led_sk #원결정유지건은 제외
+led_sk_1_per #0.6405229
+led_sk_2_per # 0.07189542
+led_sk_3_per #0.0130719
+led_sk_4_per # 0.2679739
+
+#SK사 led 관련 특허건 비율
+led_sk <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                     "비율"=c(led_sk_1_per,led_sk_2_per,led_sk_3_per,led_sk_4_per))
+```
+
+
+```{r, include = FALSE}
+##sk ram
+#데이터 불러오기 및 전처리
+ram_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skram.csv", header=T, fileEncoding = "euc-kr")
+ram_sk <- ram_sk[!(ram_sk$심사진행상태 == ""), ]
+ram_sk$심사진행상태 <- gsub("\\(.*?\\)","",ram_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+ram_sk$심사진행상태 <- substr(ram_sk$심사진행상태, 1, 5)
+ram_sk$심사진행상태 <- str_trim(ram_sk$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_sk_1 <- nrow(ram_sk[ram_sk$심사진행상태 == "등록결정",])
+ram_sk_1 <- nrow(ram_sk[ram_sk$심사진행상태 == "등록결정",])
+ram_sk_2 <- nrow(ram_sk[ram_sk$심사진행상태 == "거절결정",])
+ram_sk_3 <- nrow(ram_sk[ram_sk$심사진행상태 == "포기",])
+ram_sk_4 <- nrow(ram_sk[ram_sk$심사진행상태 == "취하",])
+ram_sk_5 <- nrow(ram_sk[ram_sk$심사진행상태 == "원결정유지",])
+ram_sk <- nrow(ram_sk)
+
+#sk사 ram 관련 특허건 개수
+ram_sk 
+ram_sk_1 
+ram_sk_2
+ram_sk_3
+ram_sk_4
+ram_sk_5
+
+#sk사 ram 관련 특허건 비율
+ram_sk_1_per <- ram_sk_1 / ram_sk 
+ram_sk_2_per <- ram_sk_2 / ram_sk
+ram_sk_3_per <- ram_sk_3 / ram_sk
+ram_sk_4_per <- ram_sk_4 / ram_sk
+ram_sk_5_per <- ram_sk_5 / ram_sk #원결정유지건은 제외
+ram_sk_1_per 
+ram_sk_2_per 
+ram_sk_3_per 
+ram_sk_4_per 
+
+#sk사 ram 관련 특허건 비율
+ram_sk <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                     "비율"=c(ram_sk_1_per,ram_sk_2_per,ram_sk_3_per,ram_sk_4_per))
+```
+
+
+```{r, include = FALSE}
+##sk tran
+#데이터 불러오기 및 전처리
+transistor_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/sktransistor.csv", header=T, fileEncoding = "euc-kr")
+transistor_sk <- transistor_sk[!(transistor_sk$심사진행상태 == ""), ]
+transistor_sk$심사진행상태 <- gsub("\\(.*?\\)","",transistor_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+transistor_sk$심사진행상태 <- substr(transistor_sk$심사진행상태, 1, 5)
+transistor_sk$심사진행상태 <- str_trim(transistor_sk$심사진행상태)
+
+#각 항목별 개수 파악 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_sk_1 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "등록결정",])
+transistor_sk_1 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "등록결정",])
+transistor_sk_2 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "거절결정",])
+transistor_sk_3 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "포기",])
+transistor_sk_4 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "취하",])
+transistor_sk_5 <- nrow(transistor_sk[transistor_sk$심사진행상태 == "원결정유지",])
+transistor_sk <- nrow(transistor_sk)
+
+#sk사 transistor 관련 특허건 개수
+transistor_sk 
+transistor_sk_1 
+transistor_sk_2
+transistor_sk_3
+transistor_sk_4
+transistor_sk_5
+
+#sk사 transistor 관련 특허건 비율
+transistor_sk_1_per <- transistor_sk_1 / transistor_sk 
+transistor_sk_2_per <- transistor_sk_2 / transistor_sk
+transistor_sk_3_per <- transistor_sk_3 / transistor_sk
+transistor_sk_4_per <- transistor_sk_4 / transistor_sk
+transistor_sk_5_per <- transistor_sk_5 / transistor_sk #원결정유지건은 제외
+transistor_sk_1_per 
+transistor_sk_2_per 
+transistor_sk_3_per 
+transistor_sk_4_per 
+
+
+#sk사 transistor 관련 특허건 비율
+transistor_sk <- data.frame("심사진행상태"=c("등록결정","거절결정","포기","취하"),
+                            "비율"=c(transistor_sk_1_per,transistor_sk_2_per,transistor_sk_3_per,transistor_sk_4_per))
+```
+
+
+```{r, include = FALSE}
+d_sk = ggplot(display_sk, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Sk사 display 관련 특허건 비율")
+
+l_sk = ggplot(led_sk, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+       geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+       geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+       labs(title = "Sk사 led 관련 특허건 비율")
+
+r_sk = ggplot(ram_sk, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+        geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+        geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+        labs(title = "Sk사 ram 관련 특허건 비율")
+
+t_sk = ggplot(transistor_sk, aes(x=심사진행상태, y=비율, fill=심사진행상태))+
+        geom_bar(mapping=aes(fill=심사진행상태),stat = "identity")+
+        geom_label(aes(label=round(비율,3),nudge_y = 1.1)) +
+        labs(title = "Sk사 transistor 관련 특허건 비율")
+
+```
+
+```{r, echo=F}
+grid.arrange(d_sk,l_sk,r_sk,t_sk)
+```
+
+<br>
+
+---
+
+<br>
+
+## 5. 특허 심사진행 상태 비율  {-}
+
+<br>
+
+```{r, echo=F}
+grid.arrange(d_l,d_s,d_sk,
+             l_l,l_s,l_sk,
+             r_l,r_s,r_sk,
+             t_l, t_s,t_sk,
+             nrow=4, ncol=3)
+```
+
+<br>
+
+---
+
+<br>
+
+---
+
+<br>
+
+# <7> 최근 5개년 <br>  기업별 반도체 특허 심사진행상태 비율 {-}
+
+<br>
+
+## 1. 코드 {-}
+
+> 예시
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+rm(list=ls()) 
+setwd("C:/Users/dnjs1/Downloads/Rr/")
+
+##LG Display
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("display(LG).csv", header=T)
+display_lg <- display_lg[!(display_lg$심사진행상태 == ""), ]
+display_lg$심사진행상태 <- gsub("\\(.*?\\)","",display_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_lg$심사진행상태 <- substr(display_lg$심사진행상태, 1, 5)
+display_lg$심사진행상태 <- str_trim(display_lg$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_lg_1 <- display_lg[display_lg$심사진행상태 == "등록결정",]
+display_lg_2 <- display_lg[display_lg$심사진행상태 == "거절결정",]
+display_lg_3 <- display_lg[display_lg$심사진행상태 == "포기",]
+display_lg_4 <- display_lg[display_lg$심사진행상태 == "취하",]
+display_lg_5 <- display_lg[display_lg$심사진행상태 == "원결정유지",]
+
+#lg display 1등록결정 특허의 연도별 추세 
+display_lg_1 <- display_lg[display_lg$심사진행상태 == "등록결정",]
+display_lg_1 <- display_lg_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_lg_1$출원일자 <- substr(display_lg_1$출원일자, 1, 4)
+display_lg_1_18 <- nrow(display_lg_1[display_lg_1$출원일자 == "2018",])
+display_lg_1_19 <- nrow(display_lg_1[display_lg_1$출원일자 == "2019",])
+display_lg_1_20 <- nrow(display_lg_1[display_lg_1$출원일자 == "2020",])
+display_lg_1_21 <- nrow(display_lg_1[display_lg_1$출원일자 == "2021",])
+display_lg_1_22 <- nrow(display_lg_1[display_lg_1$출원일자 == "2022",])
+display_lg_1_18 #291
+display_lg_1_19 #163
+display_lg_1_20 #146
+display_lg_1_21 #52
+display_lg_1_22 #45
+```
+```{r, results = "hide", message=FALSE, warning=FALSE}
+#해당 연도의 총 특허 수
+display_lg$출원일자 <- substr(display_lg$출원일자, 1, 4)
+display_lg_18 <- nrow(display_lg[display_lg$출원일자 == "2018",])
+display_lg_19 <- nrow(display_lg[display_lg$출원일자 == "2019",])
+display_lg_20 <- nrow(display_lg[display_lg$출원일자 == "2020",])
+display_lg_21 <- nrow(display_lg[display_lg$출원일자 == "2021",])
+display_lg_22 <- nrow(display_lg[display_lg$출원일자 == "2022",])
+display_lg_18 #389
+display_lg_19 #196
+display_lg_20 #155
+display_lg_21 #59
+display_lg_22 #51
+```
+
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+#lg사 display 관련 특허건 비율
+#1 등록결정
+dis_lg_1_18_per <- display_lg_1_18/display_lg_18
+dis_lg_1_19_per <- display_lg_1_19/display_lg_19
+dis_lg_1_20_per <- display_lg_1_20/display_lg_20
+dis_lg_1_21_per <- display_lg_1_21/display_lg_21
+dis_lg_1_22_per <- display_lg_1_22/display_lg_22
+dis_lg_1_18_per
+dis_lg_1_19_per
+dis_lg_1_20_per
+dis_lg_1_21_per
+dis_lg_1_22_per
+```
+<br>
+
+> 그래프 코드
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+#lg사 display 관련 특허건
+display_lg__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정"),
+                           "연도"=c("2018","2019","2020","2021","2022"),
+                           "비율"=c(dis_lg_1_18_per,dis_lg_1_19_per,dis_lg_1_20_per,dis_lg_1_21_per,dis_lg_1_22_per
+                                  ))
+display_lg__
+
+
+##그래프
+
+
+d_l = ggplot(data=display_lg__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  scale_y_break(c(0.225, 0.725)) +
+  labs(title = "최근 5개년 LG사 display 관련 특허 심사진행상태 비율")
+
+```
+
+
+<br>
+
+---
+
+<br>
+
+## 2. LG {-}
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+rm(list=ls()) 
+setwd("C:/Users/dnjs1/Downloads/Rr/")
+
+##LG Display
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("display(LG).csv", header=T)
+display_lg <- display_lg[!(display_lg$심사진행상태 == ""), ]
+display_lg$심사진행상태 <- gsub("\\(.*?\\)","",display_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_lg$심사진행상태 <- substr(display_lg$심사진행상태, 1, 5)
+display_lg$심사진행상태 <- str_trim(display_lg$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_lg_1 <- display_lg[display_lg$심사진행상태 == "등록결정",]
+display_lg_2 <- display_lg[display_lg$심사진행상태 == "거절결정",]
+display_lg_3 <- display_lg[display_lg$심사진행상태 == "포기",]
+display_lg_4 <- display_lg[display_lg$심사진행상태 == "취하",]
+display_lg_5 <- display_lg[display_lg$심사진행상태 == "원결정유지",]
+
+#lg display 1등록결정 특허의 연도별 추세 
+display_lg_1 <- display_lg[display_lg$심사진행상태 == "등록결정",]
+display_lg_1 <- display_lg_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_lg_1$출원일자 <- substr(display_lg_1$출원일자, 1, 4)
+display_lg_1_18 <- nrow(display_lg_1[display_lg_1$출원일자 == "2018",])
+display_lg_1_19 <- nrow(display_lg_1[display_lg_1$출원일자 == "2019",])
+display_lg_1_20 <- nrow(display_lg_1[display_lg_1$출원일자 == "2020",])
+display_lg_1_21 <- nrow(display_lg_1[display_lg_1$출원일자 == "2021",])
+display_lg_1_22 <- nrow(display_lg_1[display_lg_1$출원일자 == "2022",])
+display_lg_1_18 #291
+display_lg_1_19 #163
+display_lg_1_20 #146
+display_lg_1_21 #52
+display_lg_1_22 #45
+
+#lg display 2거절결정 특허의 연도별 추세 
+display_lg_2 <- display_lg[display_lg$심사진행상태 == "거절결정",]
+display_lg_2 <- display_lg_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_lg_2$출원일자 <- substr(display_lg_2$출원일자, 1, 4)
+display_lg_2_18 <- nrow(display_lg_2[display_lg_2$출원일자 == "2018",])
+display_lg_2_19 <- nrow(display_lg_2[display_lg_2$출원일자 == "2019",])
+display_lg_2_20 <- nrow(display_lg_2[display_lg_2$출원일자 == "2020",])
+display_lg_2_21 <- nrow(display_lg_2[display_lg_2$출원일자 == "2021",])
+display_lg_2_22 <- nrow(display_lg_2[display_lg_2$출원일자 == "2022",])
+display_lg_2_18 #19
+display_lg_2_19 #17
+display_lg_2_20 #9
+display_lg_2_21 #7
+display_lg_2_22 #6
+
+#lg display 3포기 특허의 연도별 추세 
+display_lg_3 <- display_lg[display_lg$심사진행상태 == "포기",]
+display_lg_3 <- display_lg_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_lg_3$출원일자 <- substr(display_lg_3$출원일자, 1, 4)
+display_lg_3_18 <- nrow(display_lg_3[display_lg_3$출원일자 == "2018",])
+display_lg_3_19 <- nrow(display_lg_3[display_lg_3$출원일자 == "2019",])
+display_lg_3_20 <- nrow(display_lg_3[display_lg_3$출원일자 == "2020",])
+display_lg_3_21 <- nrow(display_lg_3[display_lg_3$출원일자 == "2021",])
+display_lg_3_22 <- nrow(display_lg_3[display_lg_3$출원일자 == "2022",])
+display_lg_3_18 #0
+display_lg_3_19 #0
+display_lg_3_20 #0
+display_lg_3_21 #0
+display_lg_3_22 #0
+
+#lg display 4취하 특허의 연도별 추세 
+display_lg_4 <- display_lg[display_lg$심사진행상태 == "취하",]
+display_lg_4 <- display_lg_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_lg_4$출원일자 <- substr(display_lg_4$출원일자, 1, 4)
+display_lg_4_18 <- nrow(display_lg_4[display_lg_4$출원일자 == "2018",])
+display_lg_4_19 <- nrow(display_lg_4[display_lg_4$출원일자 == "2019",])
+display_lg_4_20 <- nrow(display_lg_4[display_lg_4$출원일자 == "2020",])
+display_lg_4_21 <- nrow(display_lg_4[display_lg_4$출원일자 == "2021",])
+display_lg_4_22 <- nrow(display_lg_4[display_lg_4$출원일자 == "2022",])
+display_lg_4_18 #79
+display_lg_4_19 #16
+display_lg_4_20 #0
+display_lg_4_21 #0
+display_lg_4_22 #0
+
+#해당 연도의 총 특허 수
+display_lg$출원일자 <- substr(display_lg$출원일자, 1, 4)
+display_lg_18 <- nrow(display_lg[display_lg$출원일자 == "2018",])
+display_lg_19 <- nrow(display_lg[display_lg$출원일자 == "2019",])
+display_lg_20 <- nrow(display_lg[display_lg$출원일자 == "2020",])
+display_lg_21 <- nrow(display_lg[display_lg$출원일자 == "2021",])
+display_lg_22 <- nrow(display_lg[display_lg$출원일자 == "2022",])
+display_lg_18 #389
+display_lg_19 #196
+display_lg_20 #155
+display_lg_21 #59
+display_lg_22 #51
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#lg사 display 관련 특허건 비율
+#1 등록결정
+dis_lg_1_18_per <- display_lg_1_18/display_lg_18
+dis_lg_1_19_per <- display_lg_1_19/display_lg_19
+dis_lg_1_20_per <- display_lg_1_20/display_lg_20
+dis_lg_1_21_per <- display_lg_1_21/display_lg_21
+dis_lg_1_22_per <- display_lg_1_22/display_lg_22
+dis_lg_1_18_per
+dis_lg_1_19_per
+dis_lg_1_20_per
+dis_lg_1_21_per
+dis_lg_1_22_per
+
+#2 거절결정
+dis_lg_2_18_per <- display_lg_2_18/display_lg_18
+dis_lg_2_19_per <- display_lg_2_19/display_lg_19
+dis_lg_2_20_per <- display_lg_2_20/display_lg_20
+dis_lg_2_21_per <- display_lg_2_21/display_lg_21
+dis_lg_2_22_per <- display_lg_2_22/display_lg_22
+dis_lg_2_18_per 
+dis_lg_2_19_per 
+dis_lg_2_20_per 
+dis_lg_2_21_per 
+dis_lg_2_22_per 
+
+#3 포기
+dis_lg_3_18_per <- display_lg_3_18/display_lg_18
+dis_lg_3_19_per <- display_lg_3_19/display_lg_19
+dis_lg_3_20_per <- display_lg_3_20/display_lg_20
+dis_lg_3_21_per <- display_lg_3_21/display_lg_21
+dis_lg_3_22_per <- display_lg_3_22/display_lg_22
+dis_lg_3_18_per 
+dis_lg_3_19_per 
+dis_lg_3_20_per 
+dis_lg_3_21_per 
+dis_lg_3_22_per 
+
+#4 취하
+dis_lg_4_18_per <- display_lg_4_18/display_lg_18
+dis_lg_4_19_per <- display_lg_4_19/display_lg_19
+dis_lg_4_20_per <- display_lg_4_20/display_lg_20
+dis_lg_4_21_per <- display_lg_4_21/display_lg_21
+dis_lg_4_22_per <- display_lg_4_22/display_lg_22
+dis_lg_4_18_per 
+dis_lg_4_19_per 
+dis_lg_4_20_per 
+dis_lg_4_21_per 
+dis_lg_4_22_per 
+
+#lg사 display 관련 특허건
+display_lg__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                      "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                      "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                           "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                  "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                           "비율"=c(dis_lg_1_18_per,dis_lg_1_19_per,dis_lg_1_20_per,dis_lg_1_21_per,dis_lg_1_22_per,
+                                  dis_lg_2_18_per,dis_lg_2_19_per,dis_lg_2_20_per,dis_lg_2_21_per,dis_lg_2_22_per,
+                                  dis_lg_3_18_per,dis_lg_3_19_per,dis_lg_3_20_per,dis_lg_3_21_per,dis_lg_3_22_per,
+                                  dis_lg_4_18_per,dis_lg_4_19_per,dis_lg_4_20_per,dis_lg_4_21_per,dis_lg_4_22_per))
+display_lg__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##LG led
+#데이터 불러오기 및 전처리
+led_lg <- read.csv("LED(LG).csv", header=T)
+led_lg <- led_lg[!(led_lg$심사진행상태 == ""), ]
+led_lg$심사진행상태 <- gsub("\\(.*?\\)","",led_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_lg$심사진행상태 <- substr(led_lg$심사진행상태, 1, 5)
+led_lg$심사진행상태 <- str_trim(led_lg$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_lg_1 <- led_lg[led_lg$심사진행상태 == "등록결정",]
+led_lg_2 <- led_lg[led_lg$심사진행상태 == "거절결정",]
+led_lg_3 <- led_lg[led_lg$심사진행상태 == "포기",]
+led_lg_4 <- led_lg[led_lg$심사진행상태 == "취하",]
+led_lg_5 <- led_lg[led_lg$심사진행상태 == "원결정유지",]
+
+#lg led 1등록결정 특허의 연도별 추세 
+led_lg_1 <- led_lg[led_lg$심사진행상태 == "등록결정",]
+led_lg_1 <- led_lg_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_lg_1$출원일자 <- substr(led_lg_1$출원일자, 1, 4)
+led_lg_1_18 <- nrow(led_lg_1[led_lg_1$출원일자 == "2018",])
+led_lg_1_19 <- nrow(led_lg_1[led_lg_1$출원일자 == "2019",])
+led_lg_1_20 <- nrow(led_lg_1[led_lg_1$출원일자 == "2020",])
+led_lg_1_21 <- nrow(led_lg_1[led_lg_1$출원일자 == "2021",])
+led_lg_1_22 <- nrow(led_lg_1[led_lg_1$출원일자 == "2022",])
+led_lg_1_18 #16
+led_lg_1_19 #3
+led_lg_1_20 #3
+led_lg_1_21 #3
+led_lg_1_22 #0
+
+#lg led 2거절결정 특허의 연도별 추세 
+led_lg_2 <- led_lg[led_lg$심사진행상태 == "거절결정",]
+led_lg_2 <- led_lg_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_lg_2$출원일자 <- substr(led_lg_2$출원일자, 1, 4)
+led_lg_2_18 <- nrow(led_lg_2[led_lg_2$출원일자 == "2018",])
+led_lg_2_19 <- nrow(led_lg_2[led_lg_2$출원일자 == "2019",])
+led_lg_2_20 <- nrow(led_lg_2[led_lg_2$출원일자 == "2020",])
+led_lg_2_21 <- nrow(led_lg_2[led_lg_2$출원일자 == "2021",])
+led_lg_2_22 <- nrow(led_lg_2[led_lg_2$출원일자 == "2022",])
+led_lg_2_18 #1
+led_lg_2_19 #1
+led_lg_2_20 #1
+led_lg_2_21 #1
+led_lg_2_22 #0
+
+#lg led 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+led_lg_3 <- led_lg[led_lg$심사진행상태 == "포기",]
+led_lg_3 <- led_lg_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_lg_3$출원일자 <- substr(led_lg_3$출원일자, 1, 4)
+led_lg_3_18 <- nrow(led_lg_3[led_lg_3$출원일자 == "2018",])
+led_lg_3_19 <- nrow(led_lg_3[led_lg_3$출원일자 == "2019",])
+led_lg_3_20 <- nrow(led_lg_3[led_lg_3$출원일자 == "2020",])
+led_lg_3_21 <- nrow(led_lg_3[led_lg_3$출원일자 == "2021",])
+led_lg_3_22 <- nrow(led_lg_3[led_lg_3$출원일자 == "2022",])
+led_lg_3_18 #0
+led_lg_3_19 #0
+led_lg_3_20 #0
+led_lg_3_21 #0
+led_lg_3_22 #0
+
+#lg led 4취하 특허의 연도별 추세 
+led_lg_4 <- led_lg[led_lg$심사진행상태 == "취하",]
+led_lg_4 <- led_lg_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_lg_4$출원일자 <- substr(led_lg_4$출원일자, 1, 4)
+led_lg_4_18 <- nrow(led_lg_4[led_lg_4$출원일자 == "2018",])
+led_lg_4_19 <- nrow(led_lg_4[led_lg_4$출원일자 == "2019",])
+led_lg_4_20 <- nrow(led_lg_4[led_lg_4$출원일자 == "2020",])
+led_lg_4_21 <- nrow(led_lg_4[led_lg_4$출원일자 == "2021",])
+led_lg_4_22 <- nrow(led_lg_4[led_lg_4$출원일자 == "2022",])
+led_lg_4_18 #1
+led_lg_4_19 #0
+led_lg_4_20 #0
+led_lg_4_21 #0
+led_lg_4_22 #0
+
+#해당 연도의 총 특허 수
+led_lg$출원일자 <- substr(led_lg$출원일자, 1, 4)
+led_lg_18 <- nrow(led_lg[led_lg$출원일자 == "2018",])
+led_lg_19 <- nrow(led_lg[led_lg$출원일자 == "2019",])
+led_lg_20 <- nrow(led_lg[led_lg$출원일자 == "2020",])
+led_lg_21 <- nrow(led_lg[led_lg$출원일자 == "2021",])
+led_lg_22 <- nrow(led_lg[led_lg$출원일자 == "2022",])
+led_lg_18 #18
+led_lg_19 #4
+led_lg_20 #4
+led_lg_21 #4
+led_lg_22 #0
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#lg사 led 관련 특허건 비율
+#1 등록결정
+led_lg_1_18_per <- led_lg_1_18/led_lg_18
+led_lg_1_19_per <- led_lg_1_19/led_lg_19
+led_lg_1_20_per <- led_lg_1_20/led_lg_20
+led_lg_1_21_per <- led_lg_1_21/led_lg_21
+led_lg_1_22_per <- led_lg_1_22/led_lg_22
+led_lg_1_18_per
+led_lg_1_19_per
+led_lg_1_20_per
+led_lg_1_21_per
+led_lg_1_22_per
+
+#2 거절결정
+led_lg_2_18_per <- led_lg_2_18/led_lg_18
+led_lg_2_19_per <- led_lg_2_19/led_lg_19
+led_lg_2_20_per <- led_lg_2_20/led_lg_20
+led_lg_2_21_per <- led_lg_2_21/led_lg_21
+led_lg_2_22_per <- led_lg_2_22/led_lg_22
+led_lg_2_18_per 
+led_lg_2_19_per 
+led_lg_2_20_per 
+led_lg_2_21_per 
+led_lg_2_22_per 
+
+#3 포기
+led_lg_3_18_per <- led_lg_3_18/led_lg_18
+led_lg_3_19_per <- led_lg_3_19/led_lg_19
+led_lg_3_20_per <- led_lg_3_20/led_lg_20
+led_lg_3_21_per <- led_lg_3_21/led_lg_21
+led_lg_3_22_per <- led_lg_3_22/led_lg_22
+led_lg_3_18_per 
+led_lg_3_19_per 
+led_lg_3_20_per 
+led_lg_3_21_per 
+led_lg_3_22_per 
+
+#4 취하
+led_lg_4_18_per <- led_lg_4_18/led_lg_18
+led_lg_4_19_per <- led_lg_4_19/led_lg_19
+led_lg_4_20_per <- led_lg_4_20/led_lg_20
+led_lg_4_21_per <- led_lg_4_21/led_lg_21
+led_lg_4_22_per <- led_lg_4_22/led_lg_22
+led_lg_4_18_per 
+led_lg_4_19_per 
+led_lg_4_20_per 
+led_lg_4_21_per 
+led_lg_4_22_per
+
+#lg사 led 관련 특허건
+led_lg__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                  "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                  "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                       "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                              "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                       "비율"=c(led_lg_1_18_per,led_lg_1_19_per,led_lg_1_20_per,led_lg_1_21_per,led_lg_1_22_per,
+                              led_lg_2_18_per,led_lg_2_19_per,led_lg_2_20_per,led_lg_2_21_per,led_lg_2_22_per,
+                              led_lg_3_18_per,led_lg_3_19_per,led_lg_3_20_per,led_lg_3_21_per,led_lg_3_22_per,
+                              led_lg_4_18_per,led_lg_4_19_per,led_lg_4_20_per,led_lg_4_21_per,led_lg_4_22_per))
+led_lg__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##LG ram
+#데이터 불러오기 및 전처리
+ram_lg <- read.csv("RAM(LG).csv", header=T)
+ram_lg <- ram_lg[!(ram_lg$심사진행상태 == ""), ]
+ram_lg$심사진행상태 <- gsub("\\(.*?\\)","",ram_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+ram_lg$심사진행상태 <- substr(ram_lg$심사진행상태, 1, 5)
+ram_lg$심사진행상태 <- str_trim(ram_lg$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_lg_1 <- ram_lg[ram_lg$심사진행상태 == "등록결정",]
+ram_lg_2 <- ram_lg[ram_lg$심사진행상태 == "거절결정",]
+ram_lg_3 <- ram_lg[ram_lg$심사진행상태 == "포기",]
+ram_lg_4 <- ram_lg[ram_lg$심사진행상태 == "취하",]
+ram_lg_5 <- ram_lg[ram_lg$심사진행상태 == "원결정유지",]
+
+#lg ram 1등록결정 특허의 연도별 추세 
+ram_lg_1 <- ram_lg[ram_lg$심사진행상태 == "등록결정",]
+ram_lg_1 <- ram_lg_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_lg_1$출원일자 <- substr(ram_lg_1$출원일자, 1, 4)
+ram_lg_1_18 <- nrow(ram_lg_1[ram_lg_1$출원일자 == "2018",])
+ram_lg_1_19 <- nrow(ram_lg_1[ram_lg_1$출원일자 == "2019",])
+ram_lg_1_20 <- nrow(ram_lg_1[ram_lg_1$출원일자 == "2020",])
+ram_lg_1_21 <- nrow(ram_lg_1[ram_lg_1$출원일자 == "2021",])
+ram_lg_1_22 <- nrow(ram_lg_1[ram_lg_1$출원일자 == "2022",])
+ram_lg_1_18 
+ram_lg_1_19 
+ram_lg_1_20 
+ram_lg_1_21 
+ram_lg_1_22 
+
+#lg ram 2거절결정 특허의 연도별 추세 
+ram_lg_2 <- ram_lg[ram_lg$심사진행상태 == "거절결정",]
+ram_lg_2 <- ram_lg_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_lg_2$출원일자 <- substr(ram_lg_2$출원일자, 1, 4)
+ram_lg_2_18 <- nrow(ram_lg_2[ram_lg_2$출원일자 == "2018",])
+ram_lg_2_19 <- nrow(ram_lg_2[ram_lg_2$출원일자 == "2019",])
+ram_lg_2_20 <- nrow(ram_lg_2[ram_lg_2$출원일자 == "2020",])
+ram_lg_2_21 <- nrow(ram_lg_2[ram_lg_2$출원일자 == "2021",])
+ram_lg_2_22 <- nrow(ram_lg_2[ram_lg_2$출원일자 == "2022",])
+ram_lg_2_18 
+ram_lg_2_19 
+ram_lg_2_20
+ram_lg_2_21
+ram_lg_2_22 
+
+#lg ram 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+ram_lg_3 <- ram_lg[ram_lg$심사진행상태 == "포기",]
+ram_lg_3 <- ram_lg_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_lg_3$출원일자 <- substr(ram_lg_3$출원일자, 1, 4)
+ram_lg_3_18 <- nrow(ram_lg_3[ram_lg_3$출원일자 == "2018",])
+ram_lg_3_19 <- nrow(ram_lg_3[ram_lg_3$출원일자 == "2019",])
+ram_lg_3_20 <- nrow(ram_lg_3[ram_lg_3$출원일자 == "2020",])
+ram_lg_3_21 <- nrow(ram_lg_3[ram_lg_3$출원일자 == "2021",])
+ram_lg_3_22 <- nrow(ram_lg_3[ram_lg_3$출원일자 == "2022",])
+ram_lg_3_18
+ram_lg_3_19
+ram_lg_3_20
+ram_lg_3_21
+ram_lg_3_22
+
+#lg ram 4취하 특허의 연도별 추세 
+ram_lg_4 <- ram_lg[ram_lg$심사진행상태 == "취하",]
+ram_lg_4 <- ram_lg_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_lg_4$출원일자 <- substr(ram_lg_4$출원일자, 1, 4)
+ram_lg_4_18 <- nrow(ram_lg_4[ram_lg_4$출원일자 == "2018",])
+ram_lg_4_19 <- nrow(ram_lg_4[ram_lg_4$출원일자 == "2019",])
+ram_lg_4_20 <- nrow(ram_lg_4[ram_lg_4$출원일자 == "2020",])
+ram_lg_4_21 <- nrow(ram_lg_4[ram_lg_4$출원일자 == "2021",])
+ram_lg_4_22 <- nrow(ram_lg_4[ram_lg_4$출원일자 == "2022",])
+ram_lg_4_18
+ram_lg_4_19
+ram_lg_4_20 
+ram_lg_4_21 
+ram_lg_4_22 
+
+#해당 연도의 총 특허 수
+ram_lg$출원일자 <- substr(ram_lg$출원일자, 1, 4)
+ram_lg_18 <- nrow(ram_lg[ram_lg$출원일자 == "2018",])
+ram_lg_19 <- nrow(ram_lg[ram_lg$출원일자 == "2019",])
+ram_lg_20 <- nrow(ram_lg[ram_lg$출원일자 == "2020",])
+ram_lg_21 <- nrow(ram_lg[ram_lg$출원일자 == "2021",])
+ram_lg_22 <- nrow(ram_lg[ram_lg$출원일자 == "2022",])
+ram_lg_18 
+ram_lg_19 
+ram_lg_20 
+ram_lg_21
+ram_lg_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#lg사 ram 관련 특허건 비율
+#1 등록결정
+ram_lg_1_18_per <- round(ram_lg_1_18/ram_lg_18,2)
+ram_lg_1_19_per <- round(ram_lg_1_19/ram_lg_19,2)
+ram_lg_1_20_per <- round(ram_lg_1_20/ram_lg_20,2)
+ram_lg_1_21_per <- round(ram_lg_1_21/ram_lg_21,2)
+ram_lg_1_22_per <- round(ram_lg_1_22/ram_lg_22,2)
+ram_lg_1_18_per 
+ram_lg_1_19_per 
+ram_lg_1_20_per 
+ram_lg_1_21_per 
+ram_lg_1_22_per 
+#2 거절결정
+ram_lg_2_18_per <- round(ram_lg_2_18/ram_lg_18,2)
+ram_lg_2_19_per <- round(ram_lg_2_19/ram_lg_19,2)
+ram_lg_2_20_per <- round(ram_lg_2_20/ram_lg_20,2)
+ram_lg_2_21_per <- round(ram_lg_2_21/ram_lg_21,2)
+ram_lg_2_22_per <- round(ram_lg_2_22/ram_lg_22,2)
+ram_lg_2_18_per 
+ram_lg_2_19_per 
+ram_lg_2_20_per
+ram_lg_2_21_per 
+ram_lg_2_22_per
+#3 포기
+ram_lg_3_18_per <- round(ram_lg_3_18/ram_lg_18,2)
+ram_lg_3_19_per <- round(ram_lg_3_19/ram_lg_19,2)
+ram_lg_3_20_per <- round(ram_lg_3_20/ram_lg_20,2)
+ram_lg_3_21_per <- round(ram_lg_3_21/ram_lg_21,2)
+ram_lg_3_22_per <- round(ram_lg_3_22/ram_lg_22,2)
+ram_lg_3_18_per
+ram_lg_3_19_per
+ram_lg_3_20_per 
+ram_lg_3_21_per
+ram_lg_3_22_per 
+
+#4 취하
+ram_lg_4_18_per <- round(ram_lg_4_18/ram_lg_18,2)
+ram_lg_4_19_per <- round(ram_lg_4_19/ram_lg_19,2)
+ram_lg_4_20_per <- round(ram_lg_4_20/ram_lg_20,2)
+ram_lg_4_21_per <- round(ram_lg_4_21/ram_lg_21,2)
+ram_lg_4_22_per <- round(ram_lg_4_22/ram_lg_22,2)
+ram_lg_4_18_per
+ram_lg_4_19_per
+ram_lg_4_20_per
+ram_lg_4_21_per 
+ram_lg_4_22_per 
+
+#lg사 ram 관련 특허건
+ram_lg__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                  "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                  "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                       "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                              "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                       "비율"=c(ram_lg_1_18_per,ram_lg_1_19_per,ram_lg_1_20_per,ram_lg_1_21_per,ram_lg_1_22_per,
+                              ram_lg_2_18_per,ram_lg_2_19_per,ram_lg_2_20_per,ram_lg_2_21_per,ram_lg_2_22_per,
+                              ram_lg_3_18_per,ram_lg_3_19_per,ram_lg_3_20_per,ram_lg_3_21_per,ram_lg_3_22_per,
+                              ram_lg_4_18_per,ram_lg_4_19_per,ram_lg_4_20_per,ram_lg_4_21_per,ram_lg_4_22_per))
+ram_lg__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##LG transistor
+#데이터 불러오기 및 전처리
+transistor_lg <- read.csv("Transistor(LG).csv", header=T)
+transistor_lg <- transistor_lg[!(transistor_lg$심사진행상태 == ""), ]
+transistor_lg$심사진행상태 <- gsub("\\(.*?\\)","",transistor_lg$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+transistor_lg$심사진행상태 <- substr(transistor_lg$심사진행상태, 1, 5)
+transistor_lg$심사진행상태 <- str_trim(transistor_lg$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_lg_1 <- transistor_lg[transistor_lg$심사진행상태 == "등록결정",]
+transistor_lg_2 <- transistor_lg[transistor_lg$심사진행상태 == "거절결정",]
+transistor_lg_3 <- transistor_lg[transistor_lg$심사진행상태 == "포기",]
+transistor_lg_4 <- transistor_lg[transistor_lg$심사진행상태 == "취하",]
+transistor_lg_5 <- transistor_lg[transistor_lg$심사진행상태 == "원결정유지",]
+
+#lg transistor 1등록결정 특허의 연도별 추세 
+transistor_lg_1 <- transistor_lg[transistor_lg$심사진행상태 == "등록결정",]
+transistor_lg_1 <- transistor_lg_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_lg_1$출원일자 <- substr(transistor_lg_1$출원일자, 1, 4)
+transistor_lg_1_18 <- nrow(transistor_lg_1[transistor_lg_1$출원일자 == "2018",])
+transistor_lg_1_19 <- nrow(transistor_lg_1[transistor_lg_1$출원일자 == "2019",])
+transistor_lg_1_20 <- nrow(transistor_lg_1[transistor_lg_1$출원일자 == "2020",])
+transistor_lg_1_21 <- nrow(transistor_lg_1[transistor_lg_1$출원일자 == "2021",])
+transistor_lg_1_22 <- nrow(transistor_lg_1[transistor_lg_1$출원일자 == "2022",])
+transistor_lg_1_18 #5
+transistor_lg_1_19 #0
+transistor_lg_1_20 #1
+transistor_lg_1_21 #5
+transistor_lg_1_22 #4
+
+#lg transistor 2거절결정 특허의 연도별 추세 
+transistor_lg_2 <- transistor_lg[transistor_lg$심사진행상태 == "거절결정",]
+transistor_lg_2 <- transistor_lg_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_lg_2$출원일자 <- substr(transistor_lg_2$출원일자, 1, 4)
+transistor_lg_2_18 <- nrow(transistor_lg_2[transistor_lg_2$출원일자 == "2018",])
+transistor_lg_2_19 <- nrow(transistor_lg_2[transistor_lg_2$출원일자 == "2019",])
+transistor_lg_2_20 <- nrow(transistor_lg_2[transistor_lg_2$출원일자 == "2020",])
+transistor_lg_2_21 <- nrow(transistor_lg_2[transistor_lg_2$출원일자 == "2021",])
+transistor_lg_2_22 <- nrow(transistor_lg_2[transistor_lg_2$출원일자 == "2022",])
+transistor_lg_2_18 #0
+transistor_lg_2_19 #0
+transistor_lg_2_20 #0
+transistor_lg_2_21 #0
+transistor_lg_2_22 #0
+
+#lg transistor 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+transistor_lg_3 <- transistor_lg[transistor_lg$심사진행상태 == "포기",]
+transistor_lg_3 <- transistor_lg_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_lg_3$출원일자 <- substr(transistor_lg_3$출원일자, 1, 4)
+transistor_lg_3_18 <- nrow(transistor_lg_3[transistor_lg_3$출원일자 == "2018",])
+transistor_lg_3_19 <- nrow(transistor_lg_3[transistor_lg_3$출원일자 == "2019",])
+transistor_lg_3_20 <- nrow(transistor_lg_3[transistor_lg_3$출원일자 == "2020",])
+transistor_lg_3_21 <- nrow(transistor_lg_3[transistor_lg_3$출원일자 == "2021",])
+transistor_lg_3_22 <- nrow(transistor_lg_3[transistor_lg_3$출원일자 == "2022",])
+transistor_lg_3_18 #0
+transistor_lg_3_19 #0
+transistor_lg_3_20 #0
+transistor_lg_3_21 #0
+transistor_lg_3_22 #0
+
+#lg transistor 4취하 특허의 연도별 추세 
+transistor_lg_4 <- transistor_lg[transistor_lg$심사진행상태 == "취하",]
+transistor_lg_4 <- transistor_lg_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_lg_4$출원일자 <- substr(transistor_lg_4$출원일자, 1, 4)
+transistor_lg_4_18 <- nrow(transistor_lg_4[transistor_lg_4$출원일자 == "2018",])
+transistor_lg_4_19 <- nrow(transistor_lg_4[transistor_lg_4$출원일자 == "2019",])
+transistor_lg_4_20 <- nrow(transistor_lg_4[transistor_lg_4$출원일자 == "2020",])
+transistor_lg_4_21 <- nrow(transistor_lg_4[transistor_lg_4$출원일자 == "2021",])
+transistor_lg_4_22 <- nrow(transistor_lg_4[transistor_lg_4$출원일자 == "2022",])
+transistor_lg_4_18 #0
+transistor_lg_4_19 #1
+transistor_lg_4_20 #0
+transistor_lg_4_21 #0
+transistor_lg_4_22 #0
+
+#해당 연도의 총 특허 수
+transistor_lg$출원일자 <- substr(transistor_lg$출원일자, 1, 4)
+transistor_lg_18 <- nrow(transistor_lg[transistor_lg$출원일자 == "2018",])
+transistor_lg_19 <- nrow(transistor_lg[transistor_lg$출원일자 == "2019",])
+transistor_lg_20 <- nrow(transistor_lg[transistor_lg$출원일자 == "2020",])
+transistor_lg_21 <- nrow(transistor_lg[transistor_lg$출원일자 == "2021",])
+transistor_lg_22 <- nrow(transistor_lg[transistor_lg$출원일자 == "2022",])
+transistor_lg_18 #5
+transistor_lg_19 #1
+transistor_lg_20 #1
+transistor_lg_21 #5
+transistor_lg_22 #4
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#lg사 transistor 관련 특허건 비율
+#1 등록결정
+transistor_lg_1_18_per <- transistor_lg_1_18/transistor_lg_18
+transistor_lg_1_19_per <- transistor_lg_1_19/transistor_lg_19
+transistor_lg_1_20_per <- transistor_lg_1_20/transistor_lg_20
+transistor_lg_1_21_per <- transistor_lg_1_21/transistor_lg_21
+transistor_lg_1_22_per <- transistor_lg_1_22/transistor_lg_22
+transistor_lg_1_18_per
+transistor_lg_1_19_per
+transistor_lg_1_20_per
+transistor_lg_1_21_per
+transistor_lg_1_22_per
+transistor_lg_1_22_per
+
+#2 거절결정
+transistor_lg_2_18_per <- transistor_lg_2_18/transistor_lg_18
+transistor_lg_2_19_per <- transistor_lg_2_19/transistor_lg_19
+transistor_lg_2_20_per <- transistor_lg_2_20/transistor_lg_20
+transistor_lg_2_21_per <- transistor_lg_2_21/transistor_lg_21
+transistor_lg_2_22_per <- transistor_lg_2_22/transistor_lg_22
+transistor_lg_2_18_per 
+transistor_lg_2_19_per 
+transistor_lg_2_20_per 
+transistor_lg_2_21_per 
+transistor_lg_2_22_per
+transistor_lg_2_22_per
+
+#3 포기
+transistor_lg_3_18_per <- transistor_lg_3_18/transistor_lg_18
+transistor_lg_3_19_per <- transistor_lg_3_19/transistor_lg_19
+transistor_lg_3_20_per <- transistor_lg_3_20/transistor_lg_20
+transistor_lg_3_21_per <- transistor_lg_3_21/transistor_lg_21
+transistor_lg_3_22_per <- transistor_lg_3_22/transistor_lg_22
+transistor_lg_3_18_per 
+transistor_lg_3_19_per 
+transistor_lg_3_20_per 
+transistor_lg_3_21_per 
+transistor_lg_3_22_per
+transistor_lg_3_22_per
+
+#4 취하
+transistor_lg_4_18_per <- transistor_lg_4_18/transistor_lg_18
+transistor_lg_4_19_per <- transistor_lg_4_19/transistor_lg_19
+transistor_lg_4_20_per <- transistor_lg_4_20/transistor_lg_20
+transistor_lg_4_21_per <- transistor_lg_4_21/transistor_lg_21
+transistor_lg_4_22_per <- transistor_lg_4_22/transistor_lg_22
+transistor_lg_4_18_per 
+transistor_lg_4_19_per 
+transistor_lg_4_20_per 
+transistor_lg_4_21_per 
+transistor_lg_4_22_per
+transistor_lg_4_22_per
+
+#lg사 transistor 관련 특허건
+transistor_lg__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                         "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                         "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                              "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                     "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                              "비율"=c(transistor_lg_1_18_per,transistor_lg_1_19_per,transistor_lg_1_20_per,transistor_lg_1_21_per,transistor_lg_1_22_per,
+                                     transistor_lg_2_18_per,transistor_lg_2_19_per,transistor_lg_2_20_per,transistor_lg_2_21_per,transistor_lg_2_22_per,
+                                     transistor_lg_3_18_per,transistor_lg_3_19_per,transistor_lg_3_20_per,transistor_lg_3_21_per,transistor_lg_3_22_per,
+                                     transistor_lg_4_18_per,transistor_lg_4_19_per,transistor_lg_4_20_per,transistor_lg_4_21_per,transistor_lg_4_22_per))
+transistor_lg__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+##그래프
+
+
+d_l = ggplot(data=display_lg__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  scale_y_break(c(0.225, 0.725)) +
+  labs(title = "최근 5개년 LG사 display 관련 특허 심사진행상태 비율")
+
+
+l_l = ggplot(data=led_lg__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 LG사 led 관련 특허 심사진행상태 비율")
+
+r_l = ggplot(data=ram_lg__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 LG사 ram 관련 특허 심사진행상태 비율")
+
+t_l = ggplot(data=transistor_lg__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 LG사 transistor 관련 특허 심사진행상태 비율")
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+x11()
+grid.arrange(d_l,l_l,r_l,t_l,nrow=2, ncol=2)
+
+```
+
+<br>
+
+---
+
+<br>
+
+## 3. Samsung  {-}
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+
+##samsung Display
+#데이터 불러오기 및 전처리
+display_samsung <- read.csv("display_samsung.csv", header=T)
+display_samsung <- display_samsung[!(display_samsung$심사진행상태 == ""), ]
+display_samsung$심사진행상태 <- gsub("\\(.*?\\)","",display_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_samsung$심사진행상태 <- substr(display_samsung$심사진행상태, 1, 5)
+display_samsung$심사진행상태 <- str_trim(display_samsung$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_samsung_1 <- display_samsung[display_samsung$심사진행상태 == "등록결정",]
+display_samsung_2 <- display_samsung[display_samsung$심사진행상태 == "거절결정",]
+display_samsung_3 <- display_samsung[display_samsung$심사진행상태 == "포기",]
+display_samsung_4 <- display_samsung[display_samsung$심사진행상태 == "취하",]
+display_samsung_5 <- display_samsung[display_samsung$심사진행상태 == "원결정유지",]
+
+#samsung display 1등록결정 특허의 연도별 추세 
+display_samsung_1 <- display_samsung[display_samsung$심사진행상태 == "등록결정",]
+display_samsung_1 <- display_samsung_1[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_samsung_1$출원일자 <- substr(display_samsung_1$출원일자, 1, 4)
+display_samsung_1_18 <- nrow(display_samsung_1[display_samsung_1$출원일자 == "2018",])
+display_samsung_1_19 <- nrow(display_samsung_1[display_samsung_1$출원일자 == "2019",])
+display_samsung_1_20 <- nrow(display_samsung_1[display_samsung_1$출원일자 == "2020",])
+display_samsung_1_21 <- nrow(display_samsung_1[display_samsung_1$출원일자 == "2021",])
+display_samsung_1_22 <- nrow(display_samsung_1[display_samsung_1$출원일자 == "2022",])
+display_samsung_1_18 
+display_samsung_1_19 
+display_samsung_1_20 
+display_samsung_1_21 
+display_samsung_1_22 
+
+#samsung display 2거절결정 특허의 연도별 추세 
+display_samsung_2 <- display_samsung[display_samsung$심사진행상태 == "거절결정",]
+display_samsung_2 <- display_samsung_2[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_samsung_2$출원일자 <- substr(display_samsung_2$출원일자, 1, 4)
+display_samsung_2_18 <- nrow(display_samsung_2[display_samsung_2$출원일자 == "2018",])
+display_samsung_2_19 <- nrow(display_samsung_2[display_samsung_2$출원일자 == "2019",])
+display_samsung_2_20 <- nrow(display_samsung_2[display_samsung_2$출원일자 == "2020",])
+display_samsung_2_21 <- nrow(display_samsung_2[display_samsung_2$출원일자 == "2021",])
+display_samsung_2_22 <- nrow(display_samsung_2[display_samsung_2$출원일자 == "2022",])
+display_samsung_2_18
+display_samsung_2_19 
+display_samsung_2_20
+display_samsung_2_21 
+display_samsung_2_22
+
+#samsung display 3포기 특허의 연도별 추세 
+display_samsung_3 <- display_samsung[display_samsung$심사진행상태 == "포기",]
+display_samsung_3 <- display_samsung_3[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_samsung_3$출원일자 <- substr(display_samsung_3$출원일자, 1, 4)
+display_samsung_3_18 <- nrow(display_samsung_3[display_samsung_3$출원일자 == "2018",])
+display_samsung_3_19 <- nrow(display_samsung_3[display_samsung_3$출원일자 == "2019",])
+display_samsung_3_20 <- nrow(display_samsung_3[display_samsung_3$출원일자 == "2020",])
+display_samsung_3_21 <- nrow(display_samsung_3[display_samsung_3$출원일자 == "2021",])
+display_samsung_3_22 <- nrow(display_samsung_3[display_samsung_3$출원일자 == "2022",])
+display_samsung_3_18
+display_samsung_3_19
+display_samsung_3_20
+display_samsung_3_21
+display_samsung_3_22
+
+#samsung display 4취하 특허의 연도별 추세 
+display_samsung_4 <- display_samsung[display_samsung$심사진행상태 == "취하",]
+display_samsung_4 <- display_samsung_4[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_samsung_4$출원일자 <- substr(display_samsung_4$출원일자, 1, 4)
+display_samsung_4_18 <- nrow(display_samsung_4[display_samsung_4$출원일자 == "2018",])
+display_samsung_4_19 <- nrow(display_samsung_4[display_samsung_4$출원일자 == "2019",])
+display_samsung_4_20 <- nrow(display_samsung_4[display_samsung_4$출원일자 == "2020",])
+display_samsung_4_21 <- nrow(display_samsung_4[display_samsung_4$출원일자 == "2021",])
+display_samsung_4_22 <- nrow(display_samsung_4[display_samsung_4$출원일자 == "2022",])
+display_samsung_4_18 
+display_samsung_4_19 
+display_samsung_4_20
+display_samsung_4_21
+display_samsung_4_22
+
+#해당 연도의 총 특허 수
+display_samsung$출원일자 <- substr(display_samsung$출원일자, 1, 4)
+display_samsung_18 <- nrow(display_samsung[display_samsung$출원일자 == "2018",])
+display_samsung_19 <- nrow(display_samsung[display_samsung$출원일자 == "2019",])
+display_samsung_20 <- nrow(display_samsung[display_samsung$출원일자 == "2020",])
+display_samsung_21 <- nrow(display_samsung[display_samsung$출원일자 == "2021",])
+display_samsung_22 <- nrow(display_samsung[display_samsung$출원일자 == "2022",])
+display_samsung_18 
+display_samsung_19 
+display_samsung_20 
+display_samsung_21
+display_samsung_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#samsung사 display 관련 특허건 비율
+#1 등록결정
+dis_samsung_1_18_per <- display_samsung_1_18/display_samsung_18
+dis_samsung_1_19_per <- display_samsung_1_19/display_samsung_19
+dis_samsung_1_20_per <- display_samsung_1_20/display_samsung_20
+dis_samsung_1_21_per <- display_samsung_1_21/display_samsung_21
+dis_samsung_1_22_per <- display_samsung_1_22/display_samsung_22
+dis_samsung_1_18_per
+dis_samsung_1_19_per
+dis_samsung_1_20_per
+dis_samsung_1_21_per
+dis_samsung_1_22_per
+
+#2 거절결정
+dis_samsung_2_18_per <- display_samsung_2_18/display_samsung_18
+dis_samsung_2_19_per <- display_samsung_2_19/display_samsung_19
+dis_samsung_2_20_per <- display_samsung_2_20/display_samsung_20
+dis_samsung_2_21_per <- display_samsung_2_21/display_samsung_21
+dis_samsung_2_22_per <- display_samsung_2_22/display_samsung_22
+dis_samsung_2_18_per 
+dis_samsung_2_19_per 
+dis_samsung_2_20_per 
+dis_samsung_2_21_per 
+dis_samsung_2_22_per 
+
+#3 포기
+dis_samsung_3_18_per <- display_samsung_3_18/display_samsung_18
+dis_samsung_3_19_per <- display_samsung_3_19/display_samsung_19
+dis_samsung_3_20_per <- display_samsung_3_20/display_samsung_20
+dis_samsung_3_21_per <- display_samsung_3_21/display_samsung_21
+dis_samsung_3_22_per <- display_samsung_3_22/display_samsung_22
+dis_samsung_3_18_per 
+dis_samsung_3_19_per 
+dis_samsung_3_20_per 
+dis_samsung_3_21_per 
+dis_samsung_3_22_per 
+
+#4 취하
+dis_samsung_4_18_per <- display_samsung_4_18/display_samsung_18
+dis_samsung_4_19_per <- display_samsung_4_19/display_samsung_19
+dis_samsung_4_20_per <- display_samsung_4_20/display_samsung_20
+dis_samsung_4_21_per <- display_samsung_4_21/display_samsung_21
+dis_samsung_4_22_per <- display_samsung_4_22/display_samsung_22
+dis_samsung_4_18_per 
+dis_samsung_4_19_per 
+dis_samsung_4_20_per 
+dis_samsung_4_21_per 
+dis_samsung_4_22_per 
+
+#samsung사 display 관련 특허건
+display_samsung__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                           "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                           "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                                "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                       "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                                "비율"=c(dis_samsung_1_18_per,dis_samsung_1_19_per,dis_samsung_1_20_per,dis_samsung_1_21_per,dis_samsung_1_22_per,
+                                       dis_samsung_2_18_per,dis_samsung_2_19_per,dis_samsung_2_20_per,dis_samsung_2_21_per,dis_samsung_2_22_per,
+                                       dis_samsung_3_18_per,dis_samsung_3_19_per,dis_samsung_3_20_per,dis_samsung_3_21_per,dis_samsung_3_22_per,
+                                       dis_samsung_4_18_per,dis_samsung_4_19_per,dis_samsung_4_20_per,dis_samsung_4_21_per,dis_samsung_4_22_per))
+display_samsung__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##samsung led
+#데이터 불러오기 및 전처리
+led_samsung <- read.csv("led_samsung.csv", header=T)
+led_samsung <- led_samsung[!(led_samsung$심사진행상태 == ""), ]
+led_samsung$심사진행상태 <- gsub("\\(.*?\\)","",led_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_samsung$심사진행상태 <- substr(led_samsung$심사진행상태, 1, 5)
+led_samsung$심사진행상태 <- str_trim(led_samsung$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_samsung_1 <- led_samsung[led_samsung$심사진행상태 == "등록결정",]
+led_samsung_2 <- led_samsung[led_samsung$심사진행상태 == "거절결정",]
+led_samsung_3 <- led_samsung[led_samsung$심사진행상태 == "포기",]
+led_samsung_4 <- led_samsung[led_samsung$심사진행상태 == "취하",]
+led_samsung_5 <- led_samsung[led_samsung$심사진행상태 == "원결정유지",]
+
+#samsung led 1등록결정 특허의 연도별 추세 
+led_samsung_1 <- led_samsung[led_samsung$심사진행상태 == "등록결정",]
+led_samsung_1 <- led_samsung_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_samsung_1$출원일자 <- substr(led_samsung_1$출원일자, 1, 4)
+led_samsung_1_18 <- nrow(led_samsung_1[led_samsung_1$출원일자 == "2018",])
+led_samsung_1_19 <- nrow(led_samsung_1[led_samsung_1$출원일자 == "2019",])
+led_samsung_1_20 <- nrow(led_samsung_1[led_samsung_1$출원일자 == "2020",])
+led_samsung_1_21 <- nrow(led_samsung_1[led_samsung_1$출원일자 == "2021",])
+led_samsung_1_22 <- nrow(led_samsung_1[led_samsung_1$출원일자 == "2022",])
+led_samsung_1_18
+led_samsung_1_19
+led_samsung_1_20
+led_samsung_1_21
+led_samsung_1_22
+
+#samsung led 2거절결정 특허의 연도별 추세 
+led_samsung_2 <- led_samsung[led_samsung$심사진행상태 == "거절결정",]
+led_samsung_2 <- led_samsung_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_samsung_2$출원일자 <- substr(led_samsung_2$출원일자, 1, 4)
+led_samsung_2_18 <- nrow(led_samsung_2[led_samsung_2$출원일자 == "2018",])
+led_samsung_2_19 <- nrow(led_samsung_2[led_samsung_2$출원일자 == "2019",])
+led_samsung_2_20 <- nrow(led_samsung_2[led_samsung_2$출원일자 == "2020",])
+led_samsung_2_21 <- nrow(led_samsung_2[led_samsung_2$출원일자 == "2021",])
+led_samsung_2_22 <- nrow(led_samsung_2[led_samsung_2$출원일자 == "2022",])
+led_samsung_2_18
+led_samsung_2_19
+led_samsung_2_20 
+led_samsung_2_21
+led_samsung_2_22
+
+#samsung led 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+led_samsung_3 <- led_samsung[led_samsung$심사진행상태 == "포기",]
+led_samsung_3 <- led_samsung_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_samsung_3$출원일자 <- substr(led_samsung_3$출원일자, 1, 4)
+led_samsung_3_18 <- nrow(led_samsung_3[led_samsung_3$출원일자 == "2018",])
+led_samsung_3_19 <- nrow(led_samsung_3[led_samsung_3$출원일자 == "2019",])
+led_samsung_3_20 <- nrow(led_samsung_3[led_samsung_3$출원일자 == "2020",])
+led_samsung_3_21 <- nrow(led_samsung_3[led_samsung_3$출원일자 == "2021",])
+led_samsung_3_22 <- nrow(led_samsung_3[led_samsung_3$출원일자 == "2022",])
+led_samsung_3_18
+led_samsung_3_19
+led_samsung_3_20
+led_samsung_3_21
+led_samsung_3_22
+
+#samsung led 4취하 특허의 연도별 추세 
+led_samsung_4 <- led_samsung[led_samsung$심사진행상태 == "취하",]
+led_samsung_4 <- led_samsung_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_samsung_4$출원일자 <- substr(led_samsung_4$출원일자, 1, 4)
+led_samsung_4_18 <- nrow(led_samsung_4[led_samsung_4$출원일자 == "2018",])
+led_samsung_4_19 <- nrow(led_samsung_4[led_samsung_4$출원일자 == "2019",])
+led_samsung_4_20 <- nrow(led_samsung_4[led_samsung_4$출원일자 == "2020",])
+led_samsung_4_21 <- nrow(led_samsung_4[led_samsung_4$출원일자 == "2021",])
+led_samsung_4_22 <- nrow(led_samsung_4[led_samsung_4$출원일자 == "2022",])
+led_samsung_4_18
+led_samsung_4_19
+led_samsung_4_20
+led_samsung_4_21
+led_samsung_4_22
+
+#해당 연도의 총 특허 수
+led_samsung$출원일자 <- substr(led_samsung$출원일자, 1, 4)
+led_samsung_18 <- nrow(led_samsung[led_samsung$출원일자 == "2018",])
+led_samsung_19 <- nrow(led_samsung[led_samsung$출원일자 == "2019",])
+led_samsung_20 <- nrow(led_samsung[led_samsung$출원일자 == "2020",])
+led_samsung_21 <- nrow(led_samsung[led_samsung$출원일자 == "2021",])
+led_samsung_22 <- nrow(led_samsung[led_samsung$출원일자 == "2022",])
+led_samsung_18
+led_samsung_19
+led_samsung_20
+led_samsung_21
+led_samsung_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#samsung사 led 관련 특허건 비율
+#1 등록결정
+led_samsung_1_18_per <- led_samsung_1_18/led_samsung_18
+led_samsung_1_19_per <- led_samsung_1_19/led_samsung_19
+led_samsung_1_20_per <- led_samsung_1_20/led_samsung_20
+led_samsung_1_21_per <- led_samsung_1_21/led_samsung_21
+led_samsung_1_22_per <- led_samsung_1_22/led_samsung_22
+led_samsung_1_18_per
+led_samsung_1_19_per
+led_samsung_1_20_per
+led_samsung_1_21_per
+led_samsung_1_22_per 
+led_samsung_1_22_per
+
+#2 거절결정
+led_samsung_2_18_per <- led_samsung_2_18/led_samsung_18
+led_samsung_2_19_per <- led_samsung_2_19/led_samsung_19
+led_samsung_2_20_per <- led_samsung_2_20/led_samsung_20
+led_samsung_2_21_per <- led_samsung_2_21/led_samsung_21
+led_samsung_2_22_per <- led_samsung_2_22/led_samsung_22
+led_samsung_2_18_per 
+led_samsung_2_19_per 
+led_samsung_2_20_per 
+led_samsung_2_21_per 
+led_samsung_2_22_per
+led_samsung_2_22_per
+
+#3 포기
+led_samsung_3_18_per <- led_samsung_3_18/led_samsung_18
+led_samsung_3_19_per <- led_samsung_3_19/led_samsung_19
+led_samsung_3_20_per <- led_samsung_3_20/led_samsung_20
+led_samsung_3_21_per <- led_samsung_3_21/led_samsung_21
+led_samsung_3_22_per <- led_samsung_3_22/led_samsung_22
+led_samsung_3_18_per 
+led_samsung_3_19_per 
+led_samsung_3_20_per 
+led_samsung_3_21_per 
+led_samsung_3_22_per 
+
+#4 취하
+led_samsung_4_18_per <- led_samsung_4_18/led_samsung_18
+led_samsung_4_19_per <- led_samsung_4_19/led_samsung_19
+led_samsung_4_20_per <- led_samsung_4_20/led_samsung_20
+led_samsung_4_21_per <- led_samsung_4_21/led_samsung_21
+led_samsung_4_22_per <- led_samsung_4_22/led_samsung_22
+led_samsung_4_18_per 
+led_samsung_4_19_per 
+led_samsung_4_20_per 
+led_samsung_4_21_per 
+led_samsung_4_22_per 
+
+#samsung사 led 관련 특허건
+led_samsung__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                       "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                       "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                            "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                   "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                            "비율"=c(led_samsung_1_18_per,led_samsung_1_19_per,led_samsung_1_20_per,led_samsung_1_21_per,led_samsung_1_22_per,
+                                   led_samsung_2_18_per,led_samsung_2_19_per,led_samsung_2_20_per,led_samsung_2_21_per,led_samsung_2_22_per,
+                                   led_samsung_3_18_per,led_samsung_3_19_per,led_samsung_3_20_per,led_samsung_3_21_per,led_samsung_3_22_per,
+                                   led_samsung_4_18_per,led_samsung_4_19_per,led_samsung_4_20_per,led_samsung_4_21_per,led_samsung_4_22_per))
+led_samsung__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##samsung ram
+#데이터 불러오기 및 전처리
+ram_samsung <- read.csv("ram_samsung.csv", header=T)
+ram_samsung <- ram_samsung[!(ram_samsung$심사진행상태 == ""), ]
+ram_samsung$심사진행상태 <- gsub("\\(.*?\\)","",ram_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+
+ram_samsung$심사진행상태 <- substr(ram_samsung$심사진행상태, 1, 5)
+ram_samsung$심사진행상태 <- str_trim(ram_samsung$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_samsung_1 <- ram_samsung[ram_samsung$심사진행상태 == "등록결정",]
+ram_samsung_2 <- ram_samsung[ram_samsung$심사진행상태 == "거절결정",]
+ram_samsung_3 <- ram_samsung[ram_samsung$심사진행상태 == "포기",]
+ram_samsung_4 <- ram_samsung[ram_samsung$심사진행상태 == "취하",]
+ram_samsung_5 <- ram_samsung[ram_samsung$심사진행상태 == "원결정유지",]
+
+#samsung ram 1등록결정 특허의 연도별 추세 
+ram_samsung_1 <- ram_samsung[ram_samsung$심사진행상태 == "등록결정",]
+ram_samsung_1 <- ram_samsung_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_samsung_1$출원일자 <- substr(ram_samsung_1$출원일자, 1, 4)
+ram_samsung_1_18 <- nrow(ram_samsung_1[ram_samsung_1$출원일자 == "2018",])
+ram_samsung_1_19 <- nrow(ram_samsung_1[ram_samsung_1$출원일자 == "2019",])
+ram_samsung_1_20 <- nrow(ram_samsung_1[ram_samsung_1$출원일자 == "2020",])
+ram_samsung_1_21 <- nrow(ram_samsung_1[ram_samsung_1$출원일자 == "2021",])
+ram_samsung_1_22 <- nrow(ram_samsung_1[ram_samsung_1$출원일자 == "2022",])
+ram_samsung_1_18
+ram_samsung_1_19
+ram_samsung_1_20
+ram_samsung_1_21
+ram_samsung_1_22
+
+#samsung ram 2거절결정 특허의 연도별 추세 
+ram_samsung_2 <- ram_samsung[ram_samsung$심사진행상태 == "거절결정",]
+ram_samsung_2 <- ram_samsung_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_samsung_2$출원일자 <- substr(ram_samsung_2$출원일자, 1, 4)
+ram_samsung_2_18 <- nrow(ram_samsung_2[ram_samsung_2$출원일자 == "2018",])
+ram_samsung_2_19 <- nrow(ram_samsung_2[ram_samsung_2$출원일자 == "2019",])
+ram_samsung_2_20 <- nrow(ram_samsung_2[ram_samsung_2$출원일자 == "2020",])
+ram_samsung_2_21 <- nrow(ram_samsung_2[ram_samsung_2$출원일자 == "2021",])
+ram_samsung_2_22 <- nrow(ram_samsung_2[ram_samsung_2$출원일자 == "2022",])
+ram_samsung_2_18
+ram_samsung_2_19
+ram_samsung_2_20
+ram_samsung_2_21
+ram_samsung_2_22
+
+#samsung ram 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+ram_samsung_3 <- ram_samsung[ram_samsung$심사진행상태 == "포기",]
+ram_samsung_3 <- ram_samsung_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_samsung_3$출원일자 <- substr(ram_samsung_3$출원일자, 1, 4)
+ram_samsung_3_18 <- nrow(ram_samsung_3[ram_samsung_3$출원일자 == "2018",])
+ram_samsung_3_19 <- nrow(ram_samsung_3[ram_samsung_3$출원일자 == "2019",])
+ram_samsung_3_20 <- nrow(ram_samsung_3[ram_samsung_3$출원일자 == "2020",])
+ram_samsung_3_21 <- nrow(ram_samsung_3[ram_samsung_3$출원일자 == "2021",])
+ram_samsung_3_22 <- nrow(ram_samsung_3[ram_samsung_3$출원일자 == "2022",])
+ram_samsung_3_18
+ram_samsung_3_19
+ram_samsung_3_20
+ram_samsung_3_21
+ram_samsung_3_22
+
+#samsung ram 4취하 특허의 연도별 추세 
+ram_samsung_4 <- ram_samsung[ram_samsung$심사진행상태 == "취하",]
+ram_samsung_4 <- ram_samsung_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_samsung_4$출원일자 <- substr(ram_samsung_4$출원일자, 1, 4)
+ram_samsung_4_18 <- nrow(ram_samsung_4[ram_samsung_4$출원일자 == "2018",])
+ram_samsung_4_19 <- nrow(ram_samsung_4[ram_samsung_4$출원일자 == "2019",])
+ram_samsung_4_20 <- nrow(ram_samsung_4[ram_samsung_4$출원일자 == "2020",])
+ram_samsung_4_21 <- nrow(ram_samsung_4[ram_samsung_4$출원일자 == "2021",])
+ram_samsung_4_22 <- nrow(ram_samsung_4[ram_samsung_4$출원일자 == "2022",])
+ram_samsung_4_18
+ram_samsung_4_19
+ram_samsung_4_20
+ram_samsung_4_21
+ram_samsung_4_22
+
+#해당 연도의 총 특허 수
+ram_samsung$출원일자 <- substr(ram_samsung$출원일자, 1, 4)
+ram_samsung_18 <- nrow(ram_samsung[ram_samsung$출원일자 == "2018",])
+ram_samsung_19 <- nrow(ram_samsung[ram_samsung$출원일자 == "2019",])
+ram_samsung_20 <- nrow(ram_samsung[ram_samsung$출원일자 == "2020",])
+ram_samsung_21 <- nrow(ram_samsung[ram_samsung$출원일자 == "2021",])
+ram_samsung_22 <- nrow(ram_samsung[ram_samsung$출원일자 == "2022",])
+ram_samsung_18
+ram_samsung_19
+ram_samsung_20
+ram_samsung_21
+ram_samsung_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#samsung사 ram 관련 특허건 비율
+#1 등록결정
+ram_samsung_1_18_per <- ram_samsung_1_18/ram_samsung_18
+ram_samsung_1_19_per <- ram_samsung_1_19/ram_samsung_19
+ram_samsung_1_20_per <- ram_samsung_1_20/ram_samsung_20
+ram_samsung_1_21_per <- ram_samsung_1_21/ram_samsung_21
+ram_samsung_1_22_per <- ram_samsung_1_22/ram_samsung_22
+ram_samsung_1_18_per 
+ram_samsung_1_19_per
+ram_samsung_1_20_per 
+ram_samsung_1_21_per 
+ram_samsung_1_22_per 
+
+#2 거절결정
+ram_samsung_2_18_per <- ram_samsung_2_18/ram_samsung_18
+ram_samsung_2_19_per <- ram_samsung_2_19/ram_samsung_19
+ram_samsung_2_20_per <- ram_samsung_2_20/ram_samsung_20
+ram_samsung_2_21_per <- ram_samsung_2_21/ram_samsung_21
+ram_samsung_2_22_per <- ram_samsung_2_22/ram_samsung_22
+ram_samsung_2_18_per 
+ram_samsung_2_19_per 
+ram_samsung_2_20_per 
+ram_samsung_2_21_per 
+ram_samsung_2_22_per 
+
+#3 포기
+ram_samsung_3_18_per <- ram_samsung_3_18/ram_samsung_18
+ram_samsung_3_19_per <- ram_samsung_3_19/ram_samsung_19
+ram_samsung_3_20_per <- ram_samsung_3_20/ram_samsung_20
+ram_samsung_3_21_per <- ram_samsung_3_21/ram_samsung_21
+ram_samsung_3_22_per <- ram_samsung_3_22/ram_samsung_22
+ram_samsung_3_18_per 
+ram_samsung_3_19_per 
+ram_samsung_3_20_per 
+ram_samsung_3_21_per 
+ram_samsung_3_22_per 
+
+#4 취하
+ram_samsung_4_18_per <- ram_samsung_4_18/ram_samsung_18
+ram_samsung_4_19_per <- ram_samsung_4_19/ram_samsung_19
+ram_samsung_4_20_per <- ram_samsung_4_20/ram_samsung_20
+ram_samsung_4_21_per <- ram_samsung_4_21/ram_samsung_21
+ram_samsung_4_22_per <- ram_samsung_4_22/ram_samsung_22
+ram_samsung_4_18_per 
+ram_samsung_4_19_per
+ram_samsung_4_20_per 
+ram_samsung_4_21_per 
+ram_samsung_4_22_per 
+
+#samsung사 ram 관련 특허건
+ram_samsung__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                       "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                       "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                            "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                   "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                            "비율"=c(ram_samsung_1_18_per,ram_samsung_1_19_per,ram_samsung_1_20_per,ram_samsung_1_21_per,ram_samsung_1_22_per,
+                                   ram_samsung_2_18_per,ram_samsung_2_19_per,ram_samsung_2_20_per,ram_samsung_2_21_per,ram_samsung_2_22_per,
+                                   ram_samsung_3_18_per,ram_samsung_3_19_per,ram_samsung_3_20_per,ram_samsung_3_21_per,ram_samsung_3_22_per,
+                                   ram_samsung_4_18_per,ram_samsung_4_19_per,ram_samsung_4_20_per,ram_samsung_4_21_per,ram_samsung_4_22_per))
+ram_samsung__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##samsung transistor
+#데이터 불러오기 및 전처리
+transistor_samsung <- read.csv("transistor_samsung.csv", header=T)
+transistor_samsung <- transistor_samsung[!(transistor_samsung$심사진행상태 == ""), ]
+transistor_samsung$심사진행상태 <- gsub("\\(.*?\\)","",transistor_samsung$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+transistor_samsung$심사진행상태 <- substr(transistor_samsung$심사진행상태, 1, 5)
+transistor_samsung$심사진행상태 <- str_trim(transistor_samsung$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_samsung_1 <- transistor_samsung[transistor_samsung$심사진행상태 == "등록결정",]
+transistor_samsung_2 <- transistor_samsung[transistor_samsung$심사진행상태 == "거절결정",]
+transistor_samsung_3 <- transistor_samsung[transistor_samsung$심사진행상태 == "포기",]
+transistor_samsung_4 <- transistor_samsung[transistor_samsung$심사진행상태 == "취하",]
+transistor_samsung_5 <- transistor_samsung[transistor_samsung$심사진행상태 == "원결정유지",]
+
+#samsung transistor 1등록결정 특허의 연도별 추세 
+transistor_samsung_1 <- transistor_samsung[transistor_samsung$심사진행상태 == "등록결정",]
+transistor_samsung_1 <- transistor_samsung_1[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_samsung_1$출원일자 <- substr(transistor_samsung_1$출원일자, 1, 4)
+transistor_samsung_1_18 <- nrow(transistor_samsung_1[transistor_samsung_1$출원일자 == "2018",])
+transistor_samsung_1_19 <- nrow(transistor_samsung_1[transistor_samsung_1$출원일자 == "2019",])
+transistor_samsung_1_20 <- nrow(transistor_samsung_1[transistor_samsung_1$출원일자 == "2020",])
+transistor_samsung_1_21 <- nrow(transistor_samsung_1[transistor_samsung_1$출원일자 == "2021",])
+transistor_samsung_1_22 <- nrow(transistor_samsung_1[transistor_samsung_1$출원일자 == "2022",])
+transistor_samsung_1_18
+transistor_samsung_1_19
+transistor_samsung_1_20
+transistor_samsung_1_21
+transistor_samsung_1_22
+
+#samsung transistor 2거절결정 특허의 연도별 추세 
+transistor_samsung_2 <- transistor_samsung[transistor_samsung$심사진행상태 == "거절결정",]
+transistor_samsung_2 <- transistor_samsung_2[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_samsung_2$출원일자 <- substr(transistor_samsung_2$출원일자, 1, 4)
+transistor_samsung_2_18 <- nrow(transistor_samsung_2[transistor_samsung_2$출원일자 == "2018",])
+transistor_samsung_2_19 <- nrow(transistor_samsung_2[transistor_samsung_2$출원일자 == "2019",])
+transistor_samsung_2_20 <- nrow(transistor_samsung_2[transistor_samsung_2$출원일자 == "2020",])
+transistor_samsung_2_21 <- nrow(transistor_samsung_2[transistor_samsung_2$출원일자 == "2021",])
+transistor_samsung_2_22 <- nrow(transistor_samsung_2[transistor_samsung_2$출원일자 == "2022",])
+transistor_samsung_2_18
+transistor_samsung_2_19
+transistor_samsung_2_20
+transistor_samsung_2_21
+transistor_samsung_2_22
+
+#samsung transistor 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+transistor_samsung_3 <- transistor_samsung[transistor_samsung$심사진행상태 == "포기",]
+transistor_samsung_3 <- transistor_samsung_3[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_samsung_3$출원일자 <- substr(transistor_samsung_3$출원일자, 1, 4)
+transistor_samsung_3_18 <- nrow(transistor_samsung_3[transistor_samsung_3$출원일자 == "2018",])
+transistor_samsung_3_19 <- nrow(transistor_samsung_3[transistor_samsung_3$출원일자 == "2019",])
+transistor_samsung_3_20 <- nrow(transistor_samsung_3[transistor_samsung_3$출원일자 == "2020",])
+transistor_samsung_3_21 <- nrow(transistor_samsung_3[transistor_samsung_3$출원일자 == "2021",])
+transistor_samsung_3_22 <- nrow(transistor_samsung_3[transistor_samsung_3$출원일자 == "2022",])
+transistor_samsung_3_18
+transistor_samsung_3_19
+transistor_samsung_3_20
+transistor_samsung_3_21
+transistor_samsung_3_22
+
+#samsung transistor 4취하 특허의 연도별 추세 
+transistor_samsung_4 <- transistor_samsung[transistor_samsung$심사진행상태 == "취하",]
+transistor_samsung_4 <- transistor_samsung_4[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_samsung_4$출원일자 <- substr(transistor_samsung_4$출원일자, 1, 4)
+transistor_samsung_4_18 <- nrow(transistor_samsung_4[transistor_samsung_4$출원일자 == "2018",])
+transistor_samsung_4_19 <- nrow(transistor_samsung_4[transistor_samsung_4$출원일자 == "2019",])
+transistor_samsung_4_20 <- nrow(transistor_samsung_4[transistor_samsung_4$출원일자 == "2020",])
+transistor_samsung_4_21 <- nrow(transistor_samsung_4[transistor_samsung_4$출원일자 == "2021",])
+transistor_samsung_4_22 <- nrow(transistor_samsung_4[transistor_samsung_4$출원일자 == "2022",])
+transistor_samsung_4_18
+transistor_samsung_4_19
+transistor_samsung_4_20
+transistor_samsung_4_21
+transistor_samsung_4_22
+
+#해당 연도의 총 특허 수
+transistor_samsung$출원일자 <- substr(transistor_samsung$출원일자, 1, 4)
+transistor_samsung_18 <- nrow(transistor_samsung[transistor_samsung$출원일자 == "2018",])
+transistor_samsung_19 <- nrow(transistor_samsung[transistor_samsung$출원일자 == "2019",])
+transistor_samsung_20 <- nrow(transistor_samsung[transistor_samsung$출원일자 == "2020",])
+transistor_samsung_21 <- nrow(transistor_samsung[transistor_samsung$출원일자 == "2021",])
+transistor_samsung_22 <- nrow(transistor_samsung[transistor_samsung$출원일자 == "2022",])
+transistor_samsung_18
+transistor_samsung_19
+transistor_samsung_20
+transistor_samsung_21
+transistor_samsung_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#samsung사 transistor 관련 특허건 비율
+#1 등록결정
+transistor_samsung_1_18_per <- transistor_samsung_1_18/transistor_samsung_18
+transistor_samsung_1_19_per <- transistor_samsung_1_19/transistor_samsung_19
+transistor_samsung_1_20_per <- transistor_samsung_1_20/transistor_samsung_20
+transistor_samsung_1_21_per <- transistor_samsung_1_21/transistor_samsung_21
+transistor_samsung_1_22_per <- transistor_samsung_1_22/transistor_samsung_22
+transistor_samsung_1_18_per
+transistor_samsung_1_19_per
+transistor_samsung_1_20_per
+transistor_samsung_1_21_per 
+transistor_samsung_1_22_per 
+
+#2 거절결정
+transistor_samsung_2_18_per <- transistor_samsung_2_18/transistor_samsung_18
+transistor_samsung_2_19_per <- transistor_samsung_2_19/transistor_samsung_19
+transistor_samsung_2_20_per <- transistor_samsung_2_20/transistor_samsung_20
+transistor_samsung_2_21_per <- transistor_samsung_2_21/transistor_samsung_21
+transistor_samsung_2_22_per <- transistor_samsung_2_22/transistor_samsung_22
+transistor_samsung_2_18_per 
+transistor_samsung_2_19_per 
+transistor_samsung_2_20_per 
+transistor_samsung_2_21_per 
+transistor_samsung_2_22_per 
+
+#3 포기
+transistor_samsung_3_18_per <- transistor_samsung_3_18/transistor_samsung_18
+transistor_samsung_3_19_per <- transistor_samsung_3_19/transistor_samsung_19
+transistor_samsung_3_20_per <- transistor_samsung_3_20/transistor_samsung_20
+transistor_samsung_3_21_per <- transistor_samsung_3_21/transistor_samsung_21
+transistor_samsung_3_22_per <- transistor_samsung_3_22/transistor_samsung_22
+transistor_samsung_3_18_per 
+transistor_samsung_3_19_per 
+transistor_samsung_3_20_per 
+transistor_samsung_3_21_per 
+transistor_samsung_3_22_per 
+
+#4 취하
+transistor_samsung_4_18_per <- transistor_samsung_4_18/transistor_samsung_18
+transistor_samsung_4_19_per <- transistor_samsung_4_19/transistor_samsung_19
+transistor_samsung_4_20_per <- transistor_samsung_4_20/transistor_samsung_20
+transistor_samsung_4_21_per <- transistor_samsung_4_21/transistor_samsung_21
+transistor_samsung_4_22_per <- transistor_samsung_4_22/transistor_samsung_22
+transistor_samsung_4_18_per 
+transistor_samsung_4_19_per 
+transistor_samsung_4_20_per 
+transistor_samsung_4_21_per 
+transistor_samsung_4_22_per 
+
+#samsung사 transistor 관련 특허건
+transistor_samsung__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                              "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                              "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                                   "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                          "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                                   "비율"=c(transistor_samsung_1_18_per,transistor_samsung_1_19_per,transistor_samsung_1_20_per,transistor_samsung_1_21_per,transistor_samsung_1_22_per,
+                                          transistor_samsung_2_18_per,transistor_samsung_2_19_per,transistor_samsung_2_20_per,transistor_samsung_2_21_per,transistor_samsung_2_22_per,
+                                          transistor_samsung_3_18_per,transistor_samsung_3_19_per,transistor_samsung_3_20_per,transistor_samsung_3_21_per,transistor_samsung_3_22_per,
+                                          transistor_samsung_4_18_per,transistor_samsung_4_19_per,transistor_samsung_4_20_per,transistor_samsung_4_21_per,transistor_samsung_4_22_per))
+transistor_samsung__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+##그래프
+
+d_sam = ggplot(data=display_samsung__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  scale_y_break(c(0.225, 0.725)) +
+  labs(title = "최근 5개년 Samsung사 display 관련 특허 심사진행상태 비율")
+
+l_sam = ggplot(data=led_samsung__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 Samsung사 led 관련 특허 심사진행상태 비율")
+
+r_sam = ggplot(data=ram_samsung__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 Samsung사 ram 관련 특허 심사진행상태 비율")
+
+t_sam = ggplot(data=transistor_samsung__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 Samsung사 transistor 관련 특허 심사진행상태 비율")
+```
+
+
+```{r, echo=F, message=FALSE, warning=FALSE}
+grid.arrange(d_sam,l_sam,r_sam,t_sam,nrow=2, ncol=2)
+
+```
+
+<br>
+
+---
+
+<br>
+
+## 4. SK {-}
+
+<br>
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+rm(list=ls()) 
+
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##sk Display
+#데이터 불러오기 및 전처리
+display_sk <- read.csv("skdisplay.csv", header=T, fileEncoding = "euc-kr")
+display_sk <- display_sk[!(display_sk$심사진행상태 == ""), ]
+display_sk$심사진행상태 <- gsub("\\(.*?\\)","",display_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+display_sk$심사진행상태 <- substr(display_sk$심사진행상태, 1, 5)
+display_sk$심사진행상태 <- str_trim(display_sk$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+display_sk_1 <- display_sk[display_sk$심사진행상태 == "등록결정",]
+display_sk_2 <- display_sk[display_sk$심사진행상태 == "거절결정",]
+display_sk_3 <- display_sk[display_sk$심사진행상태 == "포기",]
+display_sk_4 <- display_sk[display_sk$심사진행상태 == "취하",]
+display_sk_5 <- display_sk[display_sk$심사진행상태 == "원결정유지",]
+
+#sk display 1등록결정 특허의 연도별 추세 
+display_sk_1 <- display_sk[display_sk$심사진행상태 == "등록결정",]
+display_sk_1 <- display_sk_1[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_sk_1$출원일자 <- substr(display_sk_1$출원일자, 1, 4)
+display_sk_1_18 <- nrow(display_sk_1[display_sk_1$출원일자 == "2018",])
+display_sk_1_19 <- nrow(display_sk_1[display_sk_1$출원일자 == "2019",])
+display_sk_1_20 <- nrow(display_sk_1[display_sk_1$출원일자 == "2020",])
+display_sk_1_21 <- nrow(display_sk_1[display_sk_1$출원일자 == "2021",])
+display_sk_1_22 <- nrow(display_sk_1[display_sk_1$출원일자 == "2022",])
+display_sk_1_18 
+display_sk_1_19 
+display_sk_1_20 
+display_sk_1_21 
+display_sk_1_22 
+
+#sk display 2거절결정 특허의 연도별 추세 
+display_sk_2 <- display_sk[display_sk$심사진행상태 == "거절결정",]
+display_sk_2 <- display_sk_2[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_sk_2$출원일자 <- substr(display_sk_2$출원일자, 1, 4)
+display_sk_2_18 <- nrow(display_sk_2[display_sk_2$출원일자 == "2018",])
+display_sk_2_19 <- nrow(display_sk_2[display_sk_2$출원일자 == "2019",])
+display_sk_2_20 <- nrow(display_sk_2[display_sk_2$출원일자 == "2020",])
+display_sk_2_21 <- nrow(display_sk_2[display_sk_2$출원일자 == "2021",])
+display_sk_2_22 <- nrow(display_sk_2[display_sk_2$출원일자 == "2022",])
+display_sk_2_18 
+display_sk_2_19 
+display_sk_2_20
+display_sk_2_21
+display_sk_2_22 
+
+#sk display 3포기 특허의 연도별 추세 
+display_sk_3 <- display_sk[display_sk$심사진행상태 == "포기",]
+display_sk_3 <- display_sk_3[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_sk_3$출원일자 <- substr(display_sk_3$출원일자, 1, 4)
+display_sk_3_18 <- nrow(display_sk_3[display_sk_3$출원일자 == "2018",])
+display_sk_3_19 <- nrow(display_sk_3[display_sk_3$출원일자 == "2019",])
+display_sk_3_20 <- nrow(display_sk_3[display_sk_3$출원일자 == "2020",])
+display_sk_3_21 <- nrow(display_sk_3[display_sk_3$출원일자 == "2021",])
+display_sk_3_22 <- nrow(display_sk_3[display_sk_3$출원일자 == "2022",])
+display_sk_3_18 
+display_sk_3_19
+display_sk_3_20
+display_sk_3_21
+display_sk_3_22 
+
+#sk display 4취하 특허의 연도별 추세 
+display_sk_4 <- display_sk[display_sk$심사진행상태 == "취하",]
+display_sk_4 <- display_sk_4[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+display_sk_4$출원일자 <- substr(display_sk_4$출원일자, 1, 4)
+display_sk_4_18 <- nrow(display_sk_4[display_sk_4$출원일자 == "2018",])
+display_sk_4_19 <- nrow(display_sk_4[display_sk_4$출원일자 == "2019",])
+display_sk_4_20 <- nrow(display_sk_4[display_sk_4$출원일자 == "2020",])
+display_sk_4_21 <- nrow(display_sk_4[display_sk_4$출원일자 == "2021",])
+display_sk_4_22 <- nrow(display_sk_4[display_sk_4$출원일자 == "2022",])
+display_sk_4_18 
+display_sk_4_19 
+display_sk_4_20
+display_sk_4_21
+display_sk_4_22
+
+#해당 연도의 총 특허 수
+display_sk$출원일자 <- substr(display_sk$출원일자, 1, 4)
+display_sk_18 <- nrow(display_sk[display_sk$출원일자 == "2018",])
+display_sk_19 <- nrow(display_sk[display_sk$출원일자 == "2019",])
+display_sk_20 <- nrow(display_sk[display_sk$출원일자 == "2020",])
+display_sk_21 <- nrow(display_sk[display_sk$출원일자 == "2021",])
+display_sk_22 <- nrow(display_sk[display_sk$출원일자 == "2022",])
+display_sk_18
+display_sk_19
+display_sk_20
+display_sk_21
+display_sk_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#sk사 display 관련 특허건 비율
+#1 등록결정
+dis_sk_1_18_per <- display_sk_1_18/display_sk_18
+dis_sk_1_19_per <- display_sk_1_19/display_sk_19
+dis_sk_1_20_per <- display_sk_1_20/display_sk_20
+dis_sk_1_21_per <- display_sk_1_21/display_sk_21
+dis_sk_1_22_per <- display_sk_1_22/display_sk_22
+dis_sk_1_18_per
+dis_sk_1_19_per
+dis_sk_1_20_per
+dis_sk_1_21_per
+dis_sk_1_22_per
+
+#2 거절결정
+dis_sk_2_18_per <- display_sk_2_18/display_sk_18
+dis_sk_2_19_per <- display_sk_2_19/display_sk_19
+dis_sk_2_20_per <- display_sk_2_20/display_sk_20
+dis_sk_2_21_per <- display_sk_2_21/display_sk_21
+dis_sk_2_22_per <- display_sk_2_22/display_sk_22
+dis_sk_2_18_per 
+dis_sk_2_19_per 
+dis_sk_2_20_per 
+dis_sk_2_21_per 
+dis_sk_2_22_per 
+
+#3 포기
+dis_sk_3_18_per <- display_sk_3_18/display_sk_18
+dis_sk_3_19_per <- display_sk_3_19/display_sk_19
+dis_sk_3_20_per <- display_sk_3_20/display_sk_20
+dis_sk_3_21_per <- display_sk_3_21/display_sk_21
+dis_sk_3_22_per <- display_sk_3_22/display_sk_22
+dis_sk_3_18_per 
+dis_sk_3_19_per 
+dis_sk_3_20_per 
+dis_sk_3_21_per 
+dis_sk_3_22_per 
+
+#4 취하
+dis_sk_4_18_per <- display_sk_4_18/display_sk_18
+dis_sk_4_19_per <- display_sk_4_19/display_sk_19
+dis_sk_4_20_per <- display_sk_4_20/display_sk_20
+dis_sk_4_21_per <- display_sk_4_21/display_sk_21
+dis_sk_4_22_per <- display_sk_4_22/display_sk_22
+dis_sk_4_18_per 
+dis_sk_4_19_per 
+dis_sk_4_20_per 
+dis_sk_4_21_per 
+dis_sk_4_22_per 
+
+#sk사 display 관련 특허건
+display_sk__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                      "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                      "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                           "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                  "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                           "비율"=c(dis_sk_1_18_per,dis_sk_1_19_per,dis_sk_1_20_per,dis_sk_1_21_per,dis_sk_1_22_per,
+                                  dis_sk_2_18_per,dis_sk_2_19_per,dis_sk_2_20_per,dis_sk_2_21_per,dis_sk_2_22_per,
+                                  dis_sk_3_18_per,dis_sk_3_19_per,dis_sk_3_20_per,dis_sk_3_21_per,dis_sk_3_22_per,
+                                  dis_sk_4_18_per,dis_sk_4_19_per,dis_sk_4_20_per,dis_sk_4_21_per,dis_sk_4_22_per))
+display_sk__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##sk led
+#데이터 불러오기 및 전처리
+led_sk <- read.csv("skled.csv", header=T, fileEncoding = "euc-kr")
+led_sk <- led_sk[!(led_sk$심사진행상태 == ""), ]
+led_sk$심사진행상태 <- gsub("\\(.*?\\)","",led_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+led_sk$심사진행상태 <- substr(led_sk$심사진행상태, 1, 5)
+led_sk$심사진행상태 <- str_trim(led_sk$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+led_sk_1 <- led_sk[led_sk$심사진행상태 == "등록결정",]
+led_sk_2 <- led_sk[led_sk$심사진행상태 == "거절결정",]
+led_sk_3 <- led_sk[led_sk$심사진행상태 == "포기",]
+led_sk_4 <- led_sk[led_sk$심사진행상태 == "취하",]
+led_sk_5 <- led_sk[led_sk$심사진행상태 == "원결정유지",]
+
+#sk led 1등록결정 특허의 연도별 추세 
+led_sk_1 <- led_sk[led_sk$심사진행상태 == "등록결정",]
+led_sk_1 <- led_sk_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_sk_1$출원일자 <- substr(led_sk_1$출원일자, 1, 4)
+led_sk_1_18 <- nrow(led_sk_1[led_sk_1$출원일자 == "2018",])
+led_sk_1_19 <- nrow(led_sk_1[led_sk_1$출원일자 == "2019",])
+led_sk_1_20 <- nrow(led_sk_1[led_sk_1$출원일자 == "2020",])
+led_sk_1_21 <- nrow(led_sk_1[led_sk_1$출원일자 == "2021",])
+led_sk_1_22 <- nrow(led_sk_1[led_sk_1$출원일자 == "2022",])
+led_sk_1_18
+led_sk_1_19
+led_sk_1_20
+led_sk_1_21
+led_sk_1_22
+
+#sk led 2거절결정 특허의 연도별 추세 
+led_sk_2 <- led_sk[led_sk$심사진행상태 == "거절결정",]
+led_sk_2 <- led_sk_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_sk_2$출원일자 <- substr(led_sk_2$출원일자, 1, 4)
+led_sk_2_18 <- nrow(led_sk_2[led_sk_2$출원일자 == "2018",])
+led_sk_2_19 <- nrow(led_sk_2[led_sk_2$출원일자 == "2019",])
+led_sk_2_20 <- nrow(led_sk_2[led_sk_2$출원일자 == "2020",])
+led_sk_2_21 <- nrow(led_sk_2[led_sk_2$출원일자 == "2021",])
+led_sk_2_22 <- nrow(led_sk_2[led_sk_2$출원일자 == "2022",])
+led_sk_2_18
+led_sk_2_19
+led_sk_2_20
+led_sk_2_21
+led_sk_2_22
+
+#sk led 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+led_sk_3 <- led_sk[led_sk$심사진행상태 == "포기",]
+led_sk_3 <- led_sk_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_sk_3$출원일자 <- substr(led_sk_3$출원일자, 1, 4)
+led_sk_3_18 <- nrow(led_sk_3[led_sk_3$출원일자 == "2018",])
+led_sk_3_19 <- nrow(led_sk_3[led_sk_3$출원일자 == "2019",])
+led_sk_3_20 <- nrow(led_sk_3[led_sk_3$출원일자 == "2020",])
+led_sk_3_21 <- nrow(led_sk_3[led_sk_3$출원일자 == "2021",])
+led_sk_3_22 <- nrow(led_sk_3[led_sk_3$출원일자 == "2022",])
+led_sk_3_18
+led_sk_3_19
+led_sk_3_20
+led_sk_3_21
+led_sk_3_22
+
+#sk led 4취하 특허의 연도별 추세 
+led_sk_4 <- led_sk[led_sk$심사진행상태 == "취하",]
+led_sk_4 <- led_sk_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+led_sk_4$출원일자 <- substr(led_sk_4$출원일자, 1, 4)
+led_sk_4_18 <- nrow(led_sk_4[led_sk_4$출원일자 == "2018",])
+led_sk_4_19 <- nrow(led_sk_4[led_sk_4$출원일자 == "2019",])
+led_sk_4_20 <- nrow(led_sk_4[led_sk_4$출원일자 == "2020",])
+led_sk_4_21 <- nrow(led_sk_4[led_sk_4$출원일자 == "2021",])
+led_sk_4_22 <- nrow(led_sk_4[led_sk_4$출원일자 == "2022",])
+led_sk_4_18
+led_sk_4_19 
+led_sk_4_20 
+led_sk_4_21
+led_sk_4_22
+
+#해당 연도의 총 특허 수
+led_sk$출원일자 <- substr(led_sk$출원일자, 1, 4)
+led_sk_18 <- nrow(led_sk[led_sk$출원일자 == "2018",])
+led_sk_19 <- nrow(led_sk[led_sk$출원일자 == "2019",])
+led_sk_20 <- nrow(led_sk[led_sk$출원일자 == "2020",])
+led_sk_21 <- nrow(led_sk[led_sk$출원일자 == "2021",])
+led_sk_22 <- nrow(led_sk[led_sk$출원일자 == "2022",])
+led_sk_18
+led_sk_19
+led_sk_20
+led_sk_21
+led_sk_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#sk사 led 관련 특허건 비율
+#1 등록결정
+led_sk_1_18_per <- led_sk_1_18/led_sk_18
+led_sk_1_19_per <- led_sk_1_19/led_sk_19
+led_sk_1_20_per <- led_sk_1_20/led_sk_20
+led_sk_1_21_per <- led_sk_1_21/led_sk_21
+led_sk_1_22_per <- led_sk_1_22/led_sk_22
+led_sk_1_18_per
+led_sk_1_19_per
+led_sk_1_20_per
+led_sk_1_21_per
+led_sk_1_22_per
+
+#2 거절결정
+led_sk_2_18_per <- led_sk_2_18/led_sk_18
+led_sk_2_19_per <- led_sk_2_19/led_sk_19
+led_sk_2_20_per <- led_sk_2_20/led_sk_20
+led_sk_2_21_per <- led_sk_2_21/led_sk_21
+led_sk_2_22_per <- led_sk_2_22/led_sk_22
+led_sk_2_18_per 
+led_sk_2_19_per 
+led_sk_2_20_per 
+led_sk_2_21_per 
+led_sk_2_22_per 
+
+#3 포기
+led_sk_3_18_per <- led_sk_3_18/led_sk_18
+led_sk_3_19_per <- led_sk_3_19/led_sk_19
+led_sk_3_20_per <- led_sk_3_20/led_sk_20
+led_sk_3_21_per <- led_sk_3_21/led_sk_21
+led_sk_3_22_per <- led_sk_3_22/led_sk_22
+led_sk_3_18_per 
+led_sk_3_19_per 
+led_sk_3_20_per 
+led_sk_3_21_per 
+led_sk_3_22_per 
+
+#4 취하
+led_sk_4_18_per <- led_sk_4_18/led_sk_18
+led_sk_4_19_per <- led_sk_4_19/led_sk_19
+led_sk_4_20_per <- led_sk_4_20/led_sk_20
+led_sk_4_21_per <- led_sk_4_21/led_sk_21
+led_sk_4_22_per <- led_sk_4_22/led_sk_22
+led_sk_4_18_per 
+led_sk_4_19_per 
+led_sk_4_20_per 
+led_sk_4_21_per 
+led_sk_4_22_per
+
+#sk사 led 관련 특허건
+led_sk__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                  "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                  "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                       "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                              "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                       "비율"=c(led_sk_1_18_per,led_sk_1_19_per,led_sk_1_20_per,led_sk_1_21_per,led_sk_1_22_per,
+                              led_sk_2_18_per,led_sk_2_19_per,led_sk_2_20_per,led_sk_2_21_per,led_sk_2_22_per,
+                              led_sk_3_18_per,led_sk_3_19_per,led_sk_3_20_per,led_sk_3_21_per,led_sk_3_22_per,
+                              led_sk_4_18_per,led_sk_4_19_per,led_sk_4_20_per,led_sk_4_21_per,led_sk_4_22_per))
+led_sk__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##sk ram
+#데이터 불러오기 및 전처리
+ram_sk <- read.csv("skram.csv", header=T, fileEncoding = "euc-kr")
+ram_sk <- ram_sk[!(ram_sk$심사진행상태 == ""), ]
+ram_sk$심사진행상태 <- gsub("\\(.*?\\)","",ram_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+ram_sk$심사진행상태 <- substr(ram_sk$심사진행상태, 1, 5)
+ram_sk$심사진행상태 <- str_trim(ram_sk$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+ram_sk_1 <- ram_sk[ram_sk$심사진행상태 == "등록결정",]
+ram_sk_2 <- ram_sk[ram_sk$심사진행상태 == "거절결정",]
+ram_sk_3 <- ram_sk[ram_sk$심사진행상태 == "포기",]
+ram_sk_4 <- ram_sk[ram_sk$심사진행상태 == "취하",]
+ram_sk_5 <- ram_sk[ram_sk$심사진행상태 == "원결정유지",]
+
+#sk ram 1등록결정 특허의 연도별 추세 
+ram_sk_1 <- ram_sk[ram_sk$심사진행상태 == "등록결정",]
+ram_sk_1 <- ram_sk_1[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_sk_1$출원일자 <- substr(ram_sk_1$출원일자, 1, 4)
+ram_sk_1_18 <- nrow(ram_sk_1[ram_sk_1$출원일자 == "2018",])
+ram_sk_1_19 <- nrow(ram_sk_1[ram_sk_1$출원일자 == "2019",])
+ram_sk_1_20 <- nrow(ram_sk_1[ram_sk_1$출원일자 == "2020",])
+ram_sk_1_21 <- nrow(ram_sk_1[ram_sk_1$출원일자 == "2021",])
+ram_sk_1_22 <- nrow(ram_sk_1[ram_sk_1$출원일자 == "2022",])
+ram_sk_1_18 
+ram_sk_1_19 
+ram_sk_1_20 
+ram_sk_1_21 
+ram_sk_1_22 
+
+#sk ram 2거절결정 특허의 연도별 추세 
+ram_sk_2 <- ram_sk[ram_sk$심사진행상태 == "거절결정",]
+ram_sk_2 <- ram_sk_2[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_sk_2$출원일자 <- substr(ram_sk_2$출원일자, 1, 4)
+ram_sk_2_18 <- nrow(ram_sk_2[ram_sk_2$출원일자 == "2018",])
+ram_sk_2_19 <- nrow(ram_sk_2[ram_sk_2$출원일자 == "2019",])
+ram_sk_2_20 <- nrow(ram_sk_2[ram_sk_2$출원일자 == "2020",])
+ram_sk_2_21 <- nrow(ram_sk_2[ram_sk_2$출원일자 == "2021",])
+ram_sk_2_22 <- nrow(ram_sk_2[ram_sk_2$출원일자 == "2022",])
+ram_sk_2_18 
+ram_sk_2_19 
+ram_sk_2_20
+ram_sk_2_21
+ram_sk_2_22 
+
+#sk ram 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+ram_sk_3 <- ram_sk[ram_sk$심사진행상태 == "포기",]
+ram_sk_3 <- ram_sk_3[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_sk_3$출원일자 <- substr(ram_sk_3$출원일자, 1, 4)
+ram_sk_3_18 <- nrow(ram_sk_3[ram_sk_3$출원일자 == "2018",])
+ram_sk_3_19 <- nrow(ram_sk_3[ram_sk_3$출원일자 == "2019",])
+ram_sk_3_20 <- nrow(ram_sk_3[ram_sk_3$출원일자 == "2020",])
+ram_sk_3_21 <- nrow(ram_sk_3[ram_sk_3$출원일자 == "2021",])
+ram_sk_3_22 <- nrow(ram_sk_3[ram_sk_3$출원일자 == "2022",])
+ram_sk_3_18
+ram_sk_3_19
+ram_sk_3_20
+ram_sk_3_21
+ram_sk_3_22
+
+#sk ram 4취하 특허의 연도별 추세 
+ram_sk_4 <- ram_sk[ram_sk$심사진행상태 == "취하",]
+ram_sk_4 <- ram_sk_4[,3:4] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+ram_sk_4$출원일자 <- substr(ram_sk_4$출원일자, 1, 4)
+ram_sk_4_18 <- nrow(ram_sk_4[ram_sk_4$출원일자 == "2018",])
+ram_sk_4_19 <- nrow(ram_sk_4[ram_sk_4$출원일자 == "2019",])
+ram_sk_4_20 <- nrow(ram_sk_4[ram_sk_4$출원일자 == "2020",])
+ram_sk_4_21 <- nrow(ram_sk_4[ram_sk_4$출원일자 == "2021",])
+ram_sk_4_22 <- nrow(ram_sk_4[ram_sk_4$출원일자 == "2022",])
+ram_sk_4_18
+ram_sk_4_19
+ram_sk_4_20 
+ram_sk_4_21 
+ram_sk_4_22 
+
+#해당 연도의 총 특허 수
+ram_sk$출원일자 <- substr(ram_sk$출원일자, 1, 4)
+ram_sk_18 <- nrow(ram_sk[ram_sk$출원일자 == "2018",])
+ram_sk_19 <- nrow(ram_sk[ram_sk$출원일자 == "2019",])
+ram_sk_20 <- nrow(ram_sk[ram_sk$출원일자 == "2020",])
+ram_sk_21 <- nrow(ram_sk[ram_sk$출원일자 == "2021",])
+ram_sk_22 <- nrow(ram_sk[ram_sk$출원일자 == "2022",])
+ram_sk_18 
+ram_sk_19 
+ram_sk_20 
+ram_sk_21
+ram_sk_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#sk사 ram 관련 특허건 비율
+#1 등록결정
+ram_sk_1_18_per <- round(ram_sk_1_18/ram_sk_18,2)
+ram_sk_1_19_per <- round(ram_sk_1_19/ram_sk_19,2)
+ram_sk_1_20_per <- round(ram_sk_1_20/ram_sk_20,2)
+ram_sk_1_21_per <- round(ram_sk_1_21/ram_sk_21,2)
+ram_sk_1_22_per <- round(ram_sk_1_22/ram_sk_22,2)
+ram_sk_1_18_per 
+ram_sk_1_19_per 
+ram_sk_1_20_per 
+ram_sk_1_21_per 
+ram_sk_1_22_per 
+#2 거절결정
+ram_sk_2_18_per <- round(ram_sk_2_18/ram_sk_18,2)
+ram_sk_2_19_per <- round(ram_sk_2_19/ram_sk_19,2)
+ram_sk_2_20_per <- round(ram_sk_2_20/ram_sk_20,2)
+ram_sk_2_21_per <- round(ram_sk_2_21/ram_sk_21,2)
+ram_sk_2_22_per <- round(ram_sk_2_22/ram_sk_22,2)
+ram_sk_2_18_per 
+ram_sk_2_19_per 
+ram_sk_2_20_per
+ram_sk_2_21_per 
+ram_sk_2_22_per
+#3 포기
+ram_sk_3_18_per <- round(ram_sk_3_18/ram_sk_18,2)
+ram_sk_3_19_per <- round(ram_sk_3_19/ram_sk_19,2)
+ram_sk_3_20_per <- round(ram_sk_3_20/ram_sk_20,2)
+ram_sk_3_21_per <- round(ram_sk_3_21/ram_sk_21,2)
+ram_sk_3_22_per <- round(ram_sk_3_22/ram_sk_22,2)
+ram_sk_3_18_per
+ram_sk_3_19_per
+ram_sk_3_20_per 
+ram_sk_3_21_per
+ram_sk_3_22_per 
+
+#4 취하
+ram_sk_4_18_per <- round(ram_sk_4_18/ram_sk_18,2)
+ram_sk_4_19_per <- round(ram_sk_4_19/ram_sk_19,2)
+ram_sk_4_20_per <- round(ram_sk_4_20/ram_sk_20,2)
+ram_sk_4_21_per <- round(ram_sk_4_21/ram_sk_21,2)
+ram_sk_4_22_per <- round(ram_sk_4_22/ram_sk_22,2)
+ram_sk_4_18_per
+ram_sk_4_19_per
+ram_sk_4_20_per
+ram_sk_4_21_per 
+ram_sk_4_22_per 
+
+#sk사 ram 관련 특허건
+ram_sk__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                  "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                  "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                       "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                              "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                       "비율"=c(ram_sk_1_18_per,ram_sk_1_19_per,ram_sk_1_20_per,ram_sk_1_21_per,ram_sk_1_22_per,
+                              ram_sk_2_18_per,ram_sk_2_19_per,ram_sk_2_20_per,ram_sk_2_21_per,ram_sk_2_22_per,
+                              ram_sk_3_18_per,ram_sk_3_19_per,ram_sk_3_20_per,ram_sk_3_21_per,ram_sk_3_22_per,
+                              ram_sk_4_18_per,ram_sk_4_19_per,ram_sk_4_20_per,ram_sk_4_21_per,ram_sk_4_22_per))
+ram_sk__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+setwd('C:/Users/dnjs1/Downloads/Rr/')
+
+##sk transistor
+#데이터 불러오기 및 전처리
+transistor_sk <- read.csv("sktransistor.csv", header=T, fileEncoding = "euc-kr")
+transistor_sk <- transistor_sk[!(transistor_sk$심사진행상태 == ""), ]
+transistor_sk$심사진행상태 <- gsub("\\(.*?\\)","",transistor_sk$심사진행상태)
+#등록결정/거절결정/포기/취하(심사미청구)/기타=원결정유지
+
+transistor_sk$심사진행상태 <- substr(transistor_sk$심사진행상태, 1, 5)
+transistor_sk$심사진행상태 <- str_trim(transistor_sk$심사진행상태)
+
+#nrow 빼기
+#각 항목별로 분류 (등록결정=1, 거절결정=2, 포기=3, 취하=4, 기타=5(원결정유지) )
+transistor_sk_1 <- transistor_sk[transistor_sk$심사진행상태 == "등록결정",]
+transistor_sk_2 <- transistor_sk[transistor_sk$심사진행상태 == "거절결정",]
+transistor_sk_3 <- transistor_sk[transistor_sk$심사진행상태 == "포기",]
+transistor_sk_4 <- transistor_sk[transistor_sk$심사진행상태 == "취하",]
+transistor_sk_5 <- transistor_sk[transistor_sk$심사진행상태 == "원결정유지",]
+
+#sk transistor 1등록결정 특허의 연도별 추세 
+transistor_sk_1 <- transistor_sk[transistor_sk$심사진행상태 == "등록결정",]
+transistor_sk_1 <- transistor_sk_1[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_sk_1$출원일자 <- substr(transistor_sk_1$출원일자, 1, 4)
+transistor_sk_1_18 <- nrow(transistor_sk_1[transistor_sk_1$출원일자 == "2018",])
+transistor_sk_1_19 <- nrow(transistor_sk_1[transistor_sk_1$출원일자 == "2019",])
+transistor_sk_1_20 <- nrow(transistor_sk_1[transistor_sk_1$출원일자 == "2020",])
+transistor_sk_1_21 <- nrow(transistor_sk_1[transistor_sk_1$출원일자 == "2021",])
+transistor_sk_1_22 <- nrow(transistor_sk_1[transistor_sk_1$출원일자 == "2022",])
+transistor_sk_1_18
+transistor_sk_1_19
+transistor_sk_1_20
+transistor_sk_1_21
+transistor_sk_1_22
+
+#sk transistor 2거절결정 특허의 연도별 추세 
+transistor_sk_2 <- transistor_sk[transistor_sk$심사진행상태 == "거절결정",]
+transistor_sk_2 <- transistor_sk_2[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_sk_2$출원일자 <- substr(transistor_sk_2$출원일자, 1, 4)
+transistor_sk_2_18 <- nrow(transistor_sk_2[transistor_sk_2$출원일자 == "2018",])
+transistor_sk_2_19 <- nrow(transistor_sk_2[transistor_sk_2$출원일자 == "2019",])
+transistor_sk_2_20 <- nrow(transistor_sk_2[transistor_sk_2$출원일자 == "2020",])
+transistor_sk_2_21 <- nrow(transistor_sk_2[transistor_sk_2$출원일자 == "2021",])
+transistor_sk_2_22 <- nrow(transistor_sk_2[transistor_sk_2$출원일자 == "2022",])
+transistor_sk_2_18
+transistor_sk_2_19
+transistor_sk_2_20
+transistor_sk_2_21
+transistor_sk_2_22
+
+#sk transistor 3포기 특허의 연도별 추세 
+#2013, 2003, 1998년만 있음
+transistor_sk_3 <- transistor_sk[transistor_sk$심사진행상태 == "포기",]
+transistor_sk_3 <- transistor_sk_3[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_sk_3$출원일자 <- substr(transistor_sk_3$출원일자, 1, 4)
+transistor_sk_3_18 <- nrow(transistor_sk_3[transistor_sk_3$출원일자 == "2018",])
+transistor_sk_3_19 <- nrow(transistor_sk_3[transistor_sk_3$출원일자 == "2019",])
+transistor_sk_3_20 <- nrow(transistor_sk_3[transistor_sk_3$출원일자 == "2020",])
+transistor_sk_3_21 <- nrow(transistor_sk_3[transistor_sk_3$출원일자 == "2021",])
+transistor_sk_3_22 <- nrow(transistor_sk_3[transistor_sk_3$출원일자 == "2022",])
+transistor_sk_3_18
+transistor_sk_3_19
+transistor_sk_3_20
+transistor_sk_3_21
+transistor_sk_3_22
+
+#sk transistor 4취하 특허의 연도별 추세 
+transistor_sk_4 <- transistor_sk[transistor_sk$심사진행상태 == "취하",]
+transistor_sk_4 <- transistor_sk_4[,1:2] #연도부분만 남기기
+#출원일자에서 앞의 4글자만 남기고 지우기
+transistor_sk_4$출원일자 <- substr(transistor_sk_4$출원일자, 1, 4)
+transistor_sk_4_18 <- nrow(transistor_sk_4[transistor_sk_4$출원일자 == "2018",])
+transistor_sk_4_19 <- nrow(transistor_sk_4[transistor_sk_4$출원일자 == "2019",])
+transistor_sk_4_20 <- nrow(transistor_sk_4[transistor_sk_4$출원일자 == "2020",])
+transistor_sk_4_21 <- nrow(transistor_sk_4[transistor_sk_4$출원일자 == "2021",])
+transistor_sk_4_22 <- nrow(transistor_sk_4[transistor_sk_4$출원일자 == "2022",])
+transistor_sk_4_18
+transistor_sk_4_19
+transistor_sk_4_20
+transistor_sk_4_21
+transistor_sk_4_22
+
+#해당 연도의 총 특허 수
+transistor_sk$출원일자 <- substr(transistor_sk$출원일자, 1, 4)
+transistor_sk_18 <- nrow(transistor_sk[transistor_sk$출원일자 == "2018",])
+transistor_sk_19 <- nrow(transistor_sk[transistor_sk$출원일자 == "2019",])
+transistor_sk_20 <- nrow(transistor_sk[transistor_sk$출원일자 == "2020",])
+transistor_sk_21 <- nrow(transistor_sk[transistor_sk$출원일자 == "2021",])
+transistor_sk_22 <- nrow(transistor_sk[transistor_sk$출원일자 == "2022",])
+transistor_sk_18
+transistor_sk_19
+transistor_sk_20
+transistor_sk_21
+transistor_sk_22
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+#sk사 transistor 관련 특허건 비율
+#1 등록결정
+transistor_sk_1_18_per <- transistor_sk_1_18/transistor_sk_18
+transistor_sk_1_19_per <- transistor_sk_1_19/transistor_sk_19
+transistor_sk_1_20_per <- transistor_sk_1_20/transistor_sk_20
+transistor_sk_1_21_per <- transistor_sk_1_21/transistor_sk_21
+transistor_sk_1_22_per <- transistor_sk_1_22/transistor_sk_22
+transistor_sk_1_18_per
+transistor_sk_1_19_per
+transistor_sk_1_20_per
+transistor_sk_1_21_per
+transistor_sk_1_22_per
+transistor_sk_1_22_per
+
+#2 거절결정
+transistor_sk_2_18_per <- transistor_sk_2_18/transistor_sk_18
+transistor_sk_2_19_per <- transistor_sk_2_19/transistor_sk_19
+transistor_sk_2_20_per <- transistor_sk_2_20/transistor_sk_20
+transistor_sk_2_21_per <- transistor_sk_2_21/transistor_sk_21
+transistor_sk_2_22_per <- transistor_sk_2_22/transistor_sk_22
+transistor_sk_2_18_per 
+transistor_sk_2_19_per 
+transistor_sk_2_20_per 
+transistor_sk_2_21_per 
+transistor_sk_2_22_per
+transistor_sk_2_22_per
+
+#3 포기
+transistor_sk_3_18_per <- transistor_sk_3_18/transistor_sk_18
+transistor_sk_3_19_per <- transistor_sk_3_19/transistor_sk_19
+transistor_sk_3_20_per <- transistor_sk_3_20/transistor_sk_20
+transistor_sk_3_21_per <- transistor_sk_3_21/transistor_sk_21
+transistor_sk_3_22_per <- transistor_sk_3_22/transistor_sk_22
+transistor_sk_3_18_per 
+transistor_sk_3_19_per 
+transistor_sk_3_20_per 
+transistor_sk_3_21_per 
+transistor_sk_3_22_per
+transistor_sk_3_22_per
+
+#4 취하
+transistor_sk_4_18_per <- transistor_sk_4_18/transistor_sk_18
+transistor_sk_4_19_per <- transistor_sk_4_19/transistor_sk_19
+transistor_sk_4_20_per <- transistor_sk_4_20/transistor_sk_20
+transistor_sk_4_21_per <- transistor_sk_4_21/transistor_sk_21
+transistor_sk_4_22_per <- transistor_sk_4_22/transistor_sk_22
+transistor_sk_4_18_per 
+transistor_sk_4_19_per 
+transistor_sk_4_20_per 
+transistor_sk_4_21_per 
+transistor_sk_4_22_per
+transistor_sk_4_22_per
+
+#sk사 transistor 관련 특허건
+transistor_sk__ <- data.frame("심사진행상태"=c("등록결정","등록결정","등록결정","등록결정","등록결정",
+                                         "거절결정","거절결정","거절결정","거절결정","거절결정",
+                                         "포기","포기","포기","포기","포기","취하","취하","취하","취하","취하"),
+                              "연도"=c("2018","2019","2020","2021","2022","2018","2019","2020","2021","2022",
+                                     "2018","2019","2020","2021","2022","2018","2019","2020","2021","2022"),
+                              "비율"=c(transistor_sk_1_18_per,transistor_sk_1_19_per,transistor_sk_1_20_per,transistor_sk_1_21_per,transistor_sk_1_22_per,
+                                     transistor_sk_2_18_per,transistor_sk_2_19_per,transistor_sk_2_20_per,transistor_sk_2_21_per,transistor_sk_2_22_per,
+                                     transistor_sk_3_18_per,transistor_sk_3_19_per,transistor_sk_3_20_per,transistor_sk_3_21_per,transistor_sk_3_22_per,
+                                     transistor_sk_4_18_per,transistor_sk_4_19_per,transistor_sk_4_20_per,transistor_sk_4_21_per,transistor_sk_4_22_per))
+transistor_sk__
+```
+
+
+```{r, include = FALSE, message=FALSE, warning=FALSE}
+##그래프
+
+d_l = ggplot(data=display_sk__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  scale_y_break(c(0.225, 0.725)) +
+  labs(title = "최근 5개년 SK사 display 관련 특허 심사진행상태 비율")
+
+l_l = ggplot(data=led_sk__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 SK사 led 관련 특허 심사진행상태 비율")
+
+r_l = ggplot(data=ram_sk__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 SK사 ram 관련 특허 심사진행상태 비율")
+
+t_l = ggplot(data=transistor_sk__, aes(x=연도,y=비율,group=심사진행상태,color=심사진행상태))+
+  geom_line(size=1.3)+
+  geom_point(size=4)+
+  geom_point(size=2.5,color='#FFFFFF')+
+  labs(title = "최근 5개년 SK사 transistor 관련 특허 심사진행상태 비율")
+```
+
+
+```{r, echo = FALSE, message=FALSE, warning=FALSE}
+grid.arrange(d_l,l_l,r_l,t_l,nrow=2, ncol=2)
+
+
+```
+
+<br>
+
+---
+
+<br>
+
+---
+
+<br>
+
+# <8> 각 부품별 기업의 특허 개수 비율 {-}
+
+<br>
+
+## 1. 코드 {-}
+
+> 예시
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+##Display
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/display(LG).csv", header=T)
+display_lg <- nrow(display_lg)
+display_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/display_samsung.csv", header=T)
+display_samsung <- nrow(display_samsung)
+display_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skdisplay.csv", header=T, fileEncoding="euc-kr")
+display_sk <- nrow(display_sk)
+display_all <- sum(display_lg,display_samsung,display_sk)
+#비율
+display_lg <- display_lg/display_all
+display_samsung <- display_samsung/display_all
+display_sk <- display_sk/display_all
+
+display <- data.frame("기업"=c("LG","SAMSUNG","SK"),
+                      "퍼센트"=c(display_lg*100,display_samsung*100,display_sk*100))
+```
+
+<br>
+
+> 그래프 코드
+
+```{r, results = "hide", message=FALSE, warning=FALSE}
+dis = ggplot(display, aes(x = '', y = 퍼센트, fill = 기업)) +
+       geom_bar(width=0.5, stat = "identity", color="white") +
+       coord_polar("y",start=1)+
+       geom_text(aes(label = paste0(round(퍼센트,2),"%")),
+                 position = position_stack(vjust = 0.5))+
+       theme_void()+
+       labs(title = "Display 관련 특허 내 각 기업 비율")
+```
+
+<br>
+
+---
+
+<br>
+
+
+## 2. 각 부품별 기업 특허 개수 비율 {-}
+
+
+```{r, include = FALSE}
+##Display
+#데이터 불러오기 및 전처리
+display_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/display(LG).csv", header=T)
+display_lg <- nrow(display_lg)
+display_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/display_samsung.csv", header=T)
+display_samsung <- nrow(display_samsung)
+display_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skdisplay.csv", header=T, fileEncoding="euc-kr")
+display_sk <- nrow(display_sk)
+display_all <- sum(display_lg,display_samsung,display_sk)
+#비율
+display_lg <- display_lg/display_all
+display_samsung <- display_samsung/display_all
+display_sk <- display_sk/display_all
+
+display <- data.frame("기업"=c("LG","SAMSUNG","SK"),
+                      "퍼센트"=c(display_lg*100,display_samsung*100,display_sk*100))
+```
+
+
+```{r, include = FALSE}
+##led
+#데이터 불러오기 및 전처리
+led_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/LED(LG).csv", header=T)
+led_lg <- nrow(led_lg)
+led_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/led_samsung.csv", header=T)
+led_samsung <- nrow(led_samsung)
+led_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skled.csv", header=T, fileEncoding="euc-kr")
+led_sk <- nrow(led_sk)
+led_all <- sum(led_lg,led_samsung,led_sk)
+#비율
+led_lg <- led_lg/led_all
+led_samsung <- led_samsung/led_all
+led_sk <- led_sk/led_all
+
+led <- data.frame("기업"=c("LG","SAMSUNG","SK"),
+                  "퍼센트"=c(led_lg*100,led_samsung*100,led_sk*100))
+```
+
+
+```{r, include = FALSE}
+##ram
+#데이터 불러오기 및 전처리
+ram_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/RAM(LG).csv", header=T)
+ram_lg <- nrow(ram_lg)
+ram_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/ram_samsung.csv", header=T)
+ram_samsung <- nrow(ram_samsung)
+ram_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/skram.csv", header=T, fileEncoding="euc-kr")
+ram_sk <- nrow(ram_sk)
+ram_all <- sum(ram_lg,ram_samsung,ram_sk)
+#비율
+ram_lg <- ram_lg/ram_all
+ram_samsung <- ram_samsung/ram_all
+ram_sk <- ram_sk/ram_all
+
+ram <- data.frame("기업"=c("LG","SAMSUNG","SK"),
+                  "퍼센트"=c(ram_lg*100,ram_samsung*100,ram_sk*100))
+```
+
+
+```{r, include = FALSE}
+##transistor
+#데이터 불러오기 및 전처리
+transistor_lg <- read.csv("C:/Users/dnjs1/Downloads/Rr/Transistor(LG).csv", header=T)
+transistor_lg <- nrow(transistor_lg)
+transistor_samsung <- read.csv("C:/Users/dnjs1/Downloads/Rr/transistor_samsung.csv", header=T)
+transistor_samsung <- nrow(transistor_samsung)
+transistor_sk <- read.csv("C:/Users/dnjs1/Downloads/Rr/sktransistor.csv", header=T, fileEncoding="euc-kr")
+transistor_sk <- nrow(transistor_sk)
+transistor_all <- sum(transistor_lg,transistor_samsung,transistor_sk)
+#비율
+transistor_lg <- transistor_lg/transistor_all
+transistor_samsung <- transistor_samsung/transistor_all
+transistor_sk <- transistor_sk/transistor_all
+
+transistor <- data.frame("기업"=c("LG","SAMSUNG","SK"),
+                         "퍼센트"=c(transistor_lg*100,transistor_samsung*100,transistor_sk*100))
+```
+
+
+```{r, include = FALSE}
+##그래프
+dis = ggplot(display, aes(x = '', y = 퍼센트, fill = 기업)) +
+       geom_bar(width=0.5, stat = "identity", color="white") +
+       coord_polar("y",start=1)+
+       geom_text(aes(label = paste0(round(퍼센트,2),"%")),
+                 position = position_stack(vjust = 0.5))+
+       theme_void()+
+       labs(title = "Display 관련 특허 내 각 기업 비율")
+
+led = ggplot(led, aes(x = '', y = 퍼센트, fill = 기업)) +
+       geom_bar(width=0.5, stat = "identity", color="white") +
+       coord_polar("y",start=1)+
+       geom_text(aes(label = paste0(round(퍼센트,2),"%")),
+                     position = position_stack(vjust = 0.5))+
+       theme_void()+
+       labs(title = "led 관련 특허 내 각 기업 비율")
+
+ram = ggplot(ram, aes(x = '', y = 퍼센트, fill = 기업)) +
+       geom_bar(width=0.5, stat = "identity", color="white") +
+        coord_polar("y",start=1)+
+       geom_text(aes(label = paste0(round(퍼센트,2),"%")),
+                     position = position_stack(vjust = 0.5))+
+       theme_void()+
+       labs(title = "ram 관련 특허 내 각 기업 비율")
+
+tran = ggplot(transistor, aes(x = '', y = 퍼센트, fill = 기업)) +
+        geom_bar(width=0.5, stat = "identity", color="white") +
+        coord_polar("y",start=1)+
+        geom_text(aes(label = paste0(round(퍼센트,2),"%")),
+                      position = position_stack(vjust = 0.5))+
+        theme_void()+
+        labs(title = "tansistor 관련 특허 내 각 기업 비율")
+```
+
+<div class="warning" style='padding:0.1em; background-color:#F0F8FF; color:#000000'>
+<span>
+<p style='margin-top:1em; text-align:center'>
+<b></b></p>
+<p style='margin-left:1em;'>
+
+- Display : SAMSUNG > LG > SK
+
+- RAM : SAMSUNG > SK > LG
+
+- LED : SAMSUNG > LG > SK
+
+- Transistor : SAMSUNG > LG > SK
+
+</p></span>
+</div>
+
+<br>
+
+```{r, echo=F}
+grid.arrange(dis, ram, led, tran, nrow=2, ncol=2)
+
+
+```
+
+<br>
+
+--------------------------------------------------------------------------------------------------
+
+ⓒ Statistical Methods, Gachon University
+
+--------------------------------------------------------------------------------------------------
